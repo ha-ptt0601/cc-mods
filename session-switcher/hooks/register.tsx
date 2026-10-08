@@ -60,29 +60,52 @@ function byFile(stdout: string): Map<string, string[]> {
 }
 
 /**
- * Lists this project's sessions, newest first: one row per transcript that
- * holds at least one typed prompt, titled by its custom or AI title.
+ * The paths of every worktree in `git worktree list --porcelain` output, the
+ * main one first.
+ */
+export function worktreePaths(porcelain: string): string[] {
+  return porcelain
+    .split('\n')
+    .filter(line => line.startsWith('worktree '))
+    .map(line => line.slice('worktree '.length).trim())
+    .filter(Boolean)
+}
+
+/**
+ * The folder Claude Code keeps a directory's transcripts in.
+ */
+export function projectDir(home: string, path: string): string {
+  return `${home}/.claude/projects/${path.replace(/[^a-zA-Z0-9]/g, '-')}`
+}
+
+/**
+ * Lists this project's sessions, its worktrees' included, newest first: one
+ * row per transcript that holds at least one typed prompt, titled by its
+ * custom or AI title.
  */
 async function loadSessions($: EngineInterface, trace: string[]): Promise<SessionRow[]> {
   const root = await $.session.root()
   const env = await $.process.run(['printenv', 'HOME']).catch(() => ({ stdout: '' }))
   const home = env.stdout.trim() || (/^\/(?:Users|home)\/[^/]+/.exec(root)?.[0] ?? '')
-  const dir = `${home}/.claude/projects/${root.replace(/[^a-zA-Z0-9]/g, '-')}`
-  trace.push(`root=${root}`, `home=${home}`, `dir=${dir}`)
-  if (!(await $.fs.exists(dir))) {
-    trace.push('dir missing')
+  const git = await $.process.run(['git', 'worktree', 'list', '--porcelain'], { cwd: root })
+    .catch(() => ({ exitCode: 1, stdout: '' }))
+  const listed = git.exitCode === 0 ? worktreePaths(git.stdout) : []
+  const trees = listed.includes(root) ? listed : [root, ...listed]
+  trace.push(`root=${root}`, `home=${home}`, `dir=${projectDir(home, root)}`, `worktrees=${trees.length}`)
 
-    return []
-  }
+  const found = await Promise.all(trees.map(async tree => {
+    const dir = projectDir(home, tree)
+    if (!(await $.fs.exists(dir))) return []
 
-  const files = (await $.fs.list(dir))
-    .filter(f => f.kind === 'file' && f.name.endsWith('.jsonl'))
-    .sort((a, b) => b.mtimeMs - a.mtimeMs)
-    .slice(0, LIMIT)
+    return (await $.fs.list(dir))
+      .filter(f => f.kind === 'file' && f.name.endsWith('.jsonl'))
+      .map(f => ({ ...f, path: `${dir}/${f.name}`, worktree: tree === root ? undefined : tree.split('/').pop() }))
+  }))
+  const files = found.flat().sort((a, b) => b.mtimeMs - a.mtimeMs).slice(0, LIMIT)
   trace.push(`transcripts=${files.length}`)
   if (files.length === 0) return []
 
-  const paths = files.map(f => `${dir}/${f.name}`)
+  const paths = files.map(f => f.path)
   const grep = async (pattern: string, max: string) =>
     byFile((await $.process.run(['grep', '-H', '-m', max, '-e', pattern, ...paths])).stdout)
   const [titles, prompts] = await Promise.all([
@@ -99,7 +122,7 @@ async function loadSessions($: EngineInterface, trace: string[]): Promise<Sessio
     const custom = titleLines.map(l => field(l, 'customTitle')).filter(Boolean).at(-1)
     const ai = titleLines.map(l => field(l, 'aiTitle')).filter(Boolean).at(-1)
 
-    return [{ id, title: custom || ai || firstPrompt, mtimeMs: f.mtimeMs }]
+    return [{ id, title: custom || ai || firstPrompt, mtimeMs: f.mtimeMs, worktree: f.worktree }]
   })
 }
 
@@ -201,7 +224,7 @@ export const register: Register = on => {
         {(await read($, note)) !== '' && <Text color="yellow">{await read($, note)}</Text>}
         {rows.map(row => {
           const isCurrent = row.id === current
-          const when = `${ago(row.mtimeMs, now)} ago`
+          const when = `${row.worktree ? `[${row.worktree}] ` : ''}${ago(row.mtimeMs, now)} ago`
           const title = row.title.slice(0, Math.max(5, width - when.length - 4))
           if (isCurrent) {
             return (

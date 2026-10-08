@@ -1,6 +1,6 @@
 import { describe, expect, test, tier } from 'claude-code/testing'
 
-import { ago, promptText } from '../hooks/register'
+import { ago, projectDir, promptText, worktreePaths } from '../hooks/register'
 
 tier('user')
 
@@ -24,6 +24,24 @@ describe('ago', () => {
     expect(ago(now - 5 * 60_000, now)).toBe('5m')
     expect(ago(now - 3 * 3600_000, now)).toBe('3h')
     expect(ago(now - 2 * 24 * 3600_000, now)).toBe('2d')
+  })
+})
+
+describe('worktreePaths', () => {
+  test('reads every worktree, the main one first', async () => {
+    const porcelain = [
+      'worktree /Users/me/work/api', 'HEAD abc', 'branch refs/heads/main', '',
+      'worktree /Users/me/work/api/.claude/worktrees/fix-1', 'HEAD def', 'branch refs/heads/fix-1', '',
+    ].join('\n')
+    expect(worktreePaths(porcelain)).toEqual(['/Users/me/work/api', '/Users/me/work/api/.claude/worktrees/fix-1'])
+    expect(worktreePaths('')).toEqual([])
+  })
+})
+
+describe('projectDir', () => {
+  test('names the transcripts folder like Claude Code does', async () => {
+    expect(projectDir('/Users/me', '/Users/me/work/api/.claude/worktrees/fix-1'))
+      .toBe('/Users/me/.claude/projects/-Users-me-work-api--claude-worktrees-fix-1')
   })
 })
 

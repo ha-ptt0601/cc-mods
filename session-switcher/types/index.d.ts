@@ -1,4 +1,4 @@
-export type SessionRow = { id: string; title: string; mtimeMs: number }
+export type SessionRow = { id: string; title: string; mtimeMs: number; worktree?: string }
 
 declare module 'claude-code' {
   interface PluginState {
