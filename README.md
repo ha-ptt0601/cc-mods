@@ -1,4 +1,4 @@
-# claude-mods
+# cc-mods
 
 Small Claude Code mods: function-hook plugins that add panes, bands and commands inside Claude Code.
 
@@ -16,7 +16,7 @@ A sidebar listing the current project's sessions. Pick one to resume it.
 ## Install
 
 ```
-/plugin install session-switcher --marketplace ha-ptt0601/claude-mods
+/plugin install session-switcher --marketplace ha-ptt0601/cc-mods
 ```
 
 Answer `y` to add the marketplace, then pick the user scope.
