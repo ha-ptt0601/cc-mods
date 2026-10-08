@@ -2,6 +2,6 @@ export type SessionRow = { id: string; title: string; mtimeMs: number; worktree?
 
 declare module 'claude-code' {
   interface PluginState {
-    'session-switcher': { sessions: SessionRow[]; isLoading: boolean; note: string }
+    'session-switcher': { sessions: SessionRow[]; isLoading: boolean; note: string; query: string }
   }
 }

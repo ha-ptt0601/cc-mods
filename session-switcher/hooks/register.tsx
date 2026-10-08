@@ -8,6 +8,7 @@ const LIMIT = 30
 const sessions = atom({ plugin: 'session-switcher', key: 'sessions' } as const, [])
 const isLoading = atom({ plugin: 'session-switcher', key: 'isLoading' } as const, false)
 const note = atom({ plugin: 'session-switcher', key: 'note' } as const, '')
+const query = atom({ plugin: 'session-switcher', key: 'query' } as const, '')
 
 /**
  * The text of a transcript's user message, or '' when it is not a typed prompt
@@ -138,6 +139,33 @@ async function loadSessions($: EngineInterface, trace: string[]): Promise<Sessio
 }
 
 /**
+ * Lowercase text with Vietnamese and other diacritics removed, so `y tuong`
+ * finds `Ý tưởng`.
+ */
+function fold(text: string): string {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase()
+}
+
+/**
+ * Whether a session matches a search: every word of `search` is in its title
+ * or its worktree's name, ignoring case and diacritics. An empty search
+ * matches every session.
+ */
+export function matches(row: Pick<SessionRow, 'title' | 'worktree'>, search: string): boolean {
+  const haystack = fold(`${row.title} ${row.worktree ?? ''}`)
+
+  return fold(search).split(/\s+/).filter(Boolean).every(word => haystack.includes(word))
+}
+
+/**
+ * Resumes a session, saying so in a toast.
+ */
+function resume($: EngineInterface, row: SessionRow) {
+  $.ui.toast(`Resuming: ${row.title.slice(0, 40)}`)
+  void $.command.run({ command: 'resume', args: row.id })
+}
+
+/**
  * How long ago `ms` was, in the largest whole unit: `5m`, `3h`, `2d`.
  */
 export function ago(ms: number, now: number): string {
@@ -173,6 +201,7 @@ async function refresh($: EngineInterface) {
  * @returns a line saying what to press next
  */
 async function show($: EngineInterface): Promise<string> {
+  await update($, query, () => '')
   await $.ui.open({ id: PANE, title: 'Sessions', focus: true, columns: 60 })
   void refresh($)
 
@@ -214,8 +243,9 @@ export const register: Register = on => {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Button, Text } = $.ui.resolve(e)
-    const rows = await read($, sessions)
+    const { Box, Button, Input, Text } = $.ui.resolve(e)
+    const search = await read($, query)
+    const rows = (await read($, sessions)).filter(row => matches(row, search))
     const current = await $.session.id()
     const now = await $.clock.now()
     const width = Math.max(10, (e.props.bodyColumns ?? 40) - 6)
@@ -227,12 +257,27 @@ export const register: Register = on => {
           <Button key="refresh" plain hotkey="r" label="Refresh" dimColor onPress={() => void refresh($)} />
           <Text>  </Text>
           <Button key="close" plain hotkey="x" label="Close" dimColor onPress={() => void $.ui.close({ id: PANE })} />
+          <Text>  </Text>
+          <Button key="find" plain hotkey="s" label="Search" dimColor onPress={() => void $.ui.focus({ requestId: PANE, key: 'search' })} />
           {(await read($, isLoading)) && <Text dimColor>  loading…</Text>}
         </Box>
+        <Input
+          key="search"
+          label="Search: "
+          placeholder="session name or worktree"
+          value={search}
+          submitLabel="resume first"
+          onInput={value => void update($, query, () => value)}
+          onSubmit={value => {
+            const first = others.find(row => matches(row, value))
+            if (first) resume($, first)
+          }}
+        />
         {e.props.isFocused
-          ? <Text dimColor>1-9 / Enter resume · ↑↓ tab move · r refresh · x close · Esc back</Text>
+          ? <Text dimColor>1-9 resume · s search · r refresh · x close · Esc back</Text>
           : <Text dimColor>type /sessions (or ctrl+x tab) to use the keys</Text>}
         {(await read($, note)) !== '' && <Text color="yellow">{await read($, note)}</Text>}
+        {search !== '' && rows.length === 0 && <Text dimColor>No session matches "{search}"</Text>}
         {rows.map(row => {
           const isCurrent = row.id === current
           const when = `${row.worktree ? `[${row.worktree}] ` : ''}${ago(row.mtimeMs, now)} ago`
@@ -255,10 +300,7 @@ export const register: Register = on => {
                 hotkey={slot < 9 ? String(slot + 1) : undefined}
                 autoFocus={slot === 0 ? true : undefined}
                 label={slot < 9 ? title : `   ${title}`}
-                onPress={() => {
-                  $.ui.toast(`Resuming: ${row.title.slice(0, 40)}`)
-                  void $.command.run({ command: 'resume', args: row.id })
-                }}
+                onPress={() => resume($, row)}
               />
               <Text dimColor>  {when}</Text>
             </Box>

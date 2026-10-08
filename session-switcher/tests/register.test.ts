@@ -1,6 +1,6 @@
 import { describe, expect, test, tier } from 'claude-code/testing'
 
-import { ago, projectDir, promptText, sessionTitle, worktreePaths } from '../hooks/register'
+import { ago, matches, projectDir, promptText, sessionTitle, worktreePaths } from '../hooks/register'
 
 tier('user')
 
@@ -60,6 +60,39 @@ describe('projectDir', () => {
   test('names the transcripts folder like Claude Code does', async () => {
     expect(projectDir('/Users/me', '/Users/me/work/api/.claude/worktrees/fix-1'))
       .toBe('/Users/me/.claude/projects/-Users-me-work-api--claude-worktrees-fix-1')
+  })
+})
+
+describe('matches', () => {
+  const row = { title: 'Ý tưởng cho trang Settings', worktree: 'feat-search' }
+
+  test('finds every word in the title or worktree, ignoring case and diacritics', async () => {
+    expect(matches(row, '')).toBe(true)
+    expect(matches(row, 'settings')).toBe(true)
+    expect(matches(row, 'y tuong')).toBe(true)
+    expect(matches(row, 'tưởng SETTINGS')).toBe(true)
+    expect(matches(row, 'feat-search')).toBe(true)
+    expect(matches(row, 'billing')).toBe(false)
+    expect(matches({ title: 'Đổi tên' }, 'doi')).toBe(true)
+  })
+})
+
+describe('pane', () => {
+  test('draws a search field that filters the list', async ($, on) => {
+    on('session.id', async () => ({ value: 'current' }))
+    on('clock.now', async () => ({ value: 0 }))
+    const ui = await $.ui.mount({
+      plugin: 'session-switcher',
+      surface: 'terminal',
+      component: 'Pane',
+      requestId: 'sessions',
+      props: { title: 'Sessions', isFocused: true, bodyColumns: 60, placement: 'dock', scroll: { offset: 0, bodyRows: 20 }, view: {} },
+      viewport: { columns: 120, rows: 30 },
+    })
+    expect(await ui.find({ key: 'search' })).toBeDefined()
+    await ui.input({ key: 'search', text: 'nothing like this', kind: 'change' })
+    expect(await ui.find({ type: 'Text', text: /No session matches/ })).toBeDefined()
+    await ui.unmount()
   })
 })
 
