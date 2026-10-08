@@ -8,10 +8,14 @@ Small Claude Code mods: function-hook plugins that add panes, bands and commands
 
 A sidebar listing the current project's sessions. Pick one to resume it.
 
+![The Sessions pane beside a conversation (example data)](docs/session-switcher.svg)
+
 - `☰ Sessions` above the prompt, or `/sessions`, opens the pane with the keyboard on it
 - `1`–`9` or `Enter` resumes a session, `r` refreshes, `x` closes, `Esc` goes back to the prompt
 - `/sessions close` hides the pane from the prompt
-- Sessions with no typed prompt are left out; the open one is marked `▸ (this session)`
+- Sessions from the project's git worktrees are listed too, tagged with the worktree's name (`[feat-search] 12m ago`)
+- A session is titled by its custom title, its AI title, or its first typed prompt; one with none of them is left out
+- The open session is marked `▸ (this session)`
 
 ## Install
 
