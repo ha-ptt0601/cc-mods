@@ -12,6 +12,7 @@ A sidebar listing the current project's sessions. Pick one to resume it.
 
 - `☰ Sessions` above the prompt, or `/sessions`, opens the pane with the keyboard on it
 - `1`–`9` or `Enter` resumes a session, `r` refreshes, `x` closes, `Esc` goes back to the prompt
+- `s` jumps to the search field: typing filters the list by session name or worktree (case and diacritics ignored, so `y tuong` finds `Ý tưởng`), `Enter` resumes the first match
 - `/sessions close` hides the pane from the prompt
 - Sessions from the project's git worktrees are listed too, tagged with the worktree's name (`[feat-search] 12m ago`)
 - A session is titled by its custom title, its AI title, or its first typed prompt; one with none of them is left out

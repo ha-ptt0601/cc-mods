@@ -23,15 +23,16 @@
   <!-- sessions pane -->
   <line x1="576" y1="30" x2="576" y2="380" stroke="#555"/>
   <text x="592" y="56" fill="#d4d4d4" font-weight="bold">Sessions</text>
-  <text x="592" y="82" fill="#7a7a7a">Refresh&#160;&#160;Close</text>
-  <text x="592" y="104" fill="#7a7a7a" font-size="12">1-9 / Enter resume · ↑↓ move · r refresh · x close · Esc back</text>
-  <text x="592" y="136" fill="#4ec94e" font-weight="bold">▸ Add dark mode toggle<tspan fill="#7a7a7a" font-weight="normal">&#160;&#160;(this session)</tspan></text>
-  <rect x="588" y="144" width="224" height="22" fill="#264f78"/>
-  <text x="592" y="160" fill="#ffffff">1: Fix login redirect loop<tspan fill="#7a7a7a">&#160;&#160;3m ago</tspan></text>
-  <text x="592" y="184" fill="#d4d4d4">2: Add search endpoint<tspan fill="#7a7a7a">&#160;&#160;[feat-search] 12m ago</tspan></text>
-  <text x="592" y="208" fill="#d4d4d4">3: Write API docs<tspan fill="#7a7a7a">&#160;&#160;1h ago</tspan></text>
-  <text x="592" y="232" fill="#d4d4d4">4: Upgrade to Node 22<tspan fill="#7a7a7a">&#160;&#160;[upgrade-node] 3h ago</tspan></text>
-  <text x="592" y="256" fill="#d4d4d4">5: Debug flaky e2e test<tspan fill="#7a7a7a">&#160;&#160;1d ago</tspan></text>
-  <text x="592" y="280" fill="#d4d4d4">6: Review PR #42<tspan fill="#7a7a7a">&#160;&#160;[review-42] 2d ago</tspan></text>
-  <text x="592" y="304" fill="#d4d4d4">7: Set up CI cache<tspan fill="#7a7a7a">&#160;&#160;4d ago</tspan></text>
+  <text x="592" y="82" fill="#7a7a7a">Refresh&#160;&#160;Close&#160;&#160;Search</text>
+  <text x="592" y="106" fill="#d4d4d4">Search: <tspan fill="#7a7a7a">session name or worktree</tspan></text>
+  <text x="592" y="128" fill="#7a7a7a" font-size="12">1-9 resume · s search · r refresh · x close · Esc back</text>
+  <text x="592" y="160" fill="#4ec94e" font-weight="bold">▸ Add dark mode toggle<tspan fill="#7a7a7a" font-weight="normal">&#160;&#160;(this session)</tspan></text>
+  <rect x="588" y="168" width="224" height="22" fill="#264f78"/>
+  <text x="592" y="184" fill="#ffffff">1: Fix login redirect loop<tspan fill="#7a7a7a">&#160;&#160;3m ago</tspan></text>
+  <text x="592" y="208" fill="#d4d4d4">2: Add search endpoint<tspan fill="#7a7a7a">&#160;&#160;[feat-search] 12m ago</tspan></text>
+  <text x="592" y="232" fill="#d4d4d4">3: Write API docs<tspan fill="#7a7a7a">&#160;&#160;1h ago</tspan></text>
+  <text x="592" y="256" fill="#d4d4d4">4: Upgrade to Node 22<tspan fill="#7a7a7a">&#160;&#160;[upgrade-node] 3h ago</tspan></text>
+  <text x="592" y="280" fill="#d4d4d4">5: Debug flaky e2e test<tspan fill="#7a7a7a">&#160;&#160;1d ago</tspan></text>
+  <text x="592" y="304" fill="#d4d4d4">6: Review PR #42<tspan fill="#7a7a7a">&#160;&#160;[review-42] 2d ago</tspan></text>
+  <text x="592" y="328" fill="#d4d4d4">7: Set up CI cache<tspan fill="#7a7a7a">&#160;&#160;4d ago</tspan></text>
 </svg>
