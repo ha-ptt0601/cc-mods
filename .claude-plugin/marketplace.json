@@ -1,0 +1,14 @@
+{
+  "name": "claude-mods",
+  "owner": {
+    "name": "ha-ptt0601"
+  },
+  "description": "Small Claude Code mods (function-hook plugins) by ha-ptt0601",
+  "plugins": [
+    {
+      "name": "session-switcher",
+      "source": "./session-switcher",
+      "description": "A sidebar listing this project's sessions; click one to resume it"
+    }
+  ]
+}
