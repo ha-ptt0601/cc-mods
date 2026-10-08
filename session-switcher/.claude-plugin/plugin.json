@@ -1,6 +1,6 @@
 {
   "name": "session-switcher",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A sidebar listing this project's sessions; click one to resume it",
   "author": { "name": "ha-ptt0601" },
   "types": "./types/index.d.ts"
