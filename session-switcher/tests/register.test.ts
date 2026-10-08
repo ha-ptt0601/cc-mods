@@ -19,19 +19,19 @@ describe('promptText', () => {
 })
 
 describe('sessionTitle', () => {
-  const custom = '{"type":"custom-title","customTitle":"chip · api#2095 · Full review"}'
+  const custom = '{"type":"custom-title","customTitle":"Fix login bug"}'
   const ai = '{"type":"ai-title","aiTitle":"review pr"}'
   const command = '{"type":"user","message":{"content":"<command-name>/review-pr</command-name>"}}'
   const typed = '{"type":"user","message":{"content":"fix the bug"}}'
 
   test('prefers the custom title, then the AI title, then the first prompt', async () => {
-    expect(sessionTitle([ai, custom], [typed])).toBe('chip · api#2095 · Full review')
+    expect(sessionTitle([ai, custom], [typed])).toBe('Fix login bug')
     expect(sessionTitle([ai], [typed])).toBe('review pr')
     expect(sessionTitle([], [command, typed])).toBe('fix the bug')
   })
 
   test('keeps a titled session started by a slash command, drops an empty one', async () => {
-    expect(sessionTitle([custom], [command])).toBe('chip · api#2095 · Full review')
+    expect(sessionTitle([custom], [command])).toBe('Fix login bug')
     expect(sessionTitle([], [command])).toBe('')
   })
 })
