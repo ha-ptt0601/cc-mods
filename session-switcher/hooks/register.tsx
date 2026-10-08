@@ -45,6 +45,21 @@ function field(line: string, key: string): string {
 }
 
 /**
+ * A transcript's title: its last custom title, else its last AI title, else
+ * its first typed prompt; '' when it has none of them (nothing worth listing).
+ * A session started by a slash command has no typed prompt but is titled.
+ *
+ * @param titleLines the transcript's custom-title and ai-title lines
+ * @param userLines the transcript's first user lines
+ */
+export function sessionTitle(titleLines: string[], userLines: string[]): string {
+  const custom = titleLines.map(l => field(l, 'customTitle')).filter(Boolean).at(-1)
+  const ai = titleLines.map(l => field(l, 'aiTitle')).filter(Boolean).at(-1)
+
+  return custom || ai || userLines.map(promptText).find(Boolean) || ''
+}
+
+/**
  * Groups `grep -H` output (`path:line`) by the transcript's session id.
  */
 function byFile(stdout: string): Map<string, string[]> {
@@ -116,13 +131,9 @@ async function loadSessions($: EngineInterface, trace: string[]): Promise<Sessio
 
   return files.flatMap(f => {
     const id = f.name.slice(0, -'.jsonl'.length)
-    const firstPrompt = (prompts.get(id) ?? []).map(promptText).find(Boolean)
-    if (!firstPrompt) return []
-    const titleLines = titles.get(id) ?? []
-    const custom = titleLines.map(l => field(l, 'customTitle')).filter(Boolean).at(-1)
-    const ai = titleLines.map(l => field(l, 'aiTitle')).filter(Boolean).at(-1)
+    const title = sessionTitle(titles.get(id) ?? [], prompts.get(id) ?? [])
 
-    return [{ id, title: custom || ai || firstPrompt, mtimeMs: f.mtimeMs, worktree: f.worktree }]
+    return title ? [{ id, title, mtimeMs: f.mtimeMs, worktree: f.worktree }] : []
   })
 }
 
