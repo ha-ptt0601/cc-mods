@@ -9,6 +9,11 @@
       "name": "session-switcher",
       "source": "./session-switcher",
       "description": "A sidebar listing this project's sessions; click one to resume it"
+    },
+    {
+      "name": "file-tree",
+      "source": "./file-tree",
+      "description": "An IDE-style file tree that shows what Claude reads, edits and commits"
     }
   ]
 }

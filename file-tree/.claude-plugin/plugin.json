@@ -1,0 +1,50 @@
+{
+  "name": "file-tree",
+  "version": "0.1.0",
+  "description": "An IDE-style file tree that shows what Claude reads, edits and commits, with git status, search and a file preview",
+  "author": { "name": "ha-ptt0601" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "style": {
+      "type": "string",
+      "title": "Style",
+      "description": "How the tree looks: ide (icons, guides, git letters), minimal (quiet, dots), rich (line counts, ages, Claude status line). The ◐ button in the pane cycles it too.",
+      "default": "ide",
+      "options": ["ide", "minimal", "rich"]
+    },
+    "previewLayout": {
+      "type": "string",
+      "title": "Preview layout",
+      "description": "replace: the preview fills the pane; split: the tree on top, the preview below",
+      "default": "replace",
+      "options": ["replace", "split"]
+    },
+    "openWith": {
+      "type": "string",
+      "title": "Open with",
+      "description": "Command the ↗ button runs on a file: {path} is the file, {dir} its folder; without {path} the path goes last. Runs without a shell. Empty: the default app.",
+      "default": ""
+    },
+    "followClaude": {
+      "type": "string",
+      "title": "Follow Claude",
+      "description": "on: scroll the tree to the file Claude reads, edits or commits",
+      "default": "on",
+      "options": ["on", "off"]
+    },
+    "icons": {
+      "type": "string",
+      "title": "Icons",
+      "description": "nerd needs a Nerd Font in the terminal; unicode works everywhere",
+      "default": "unicode",
+      "options": ["nerd", "unicode"]
+    },
+    "showIgnored": {
+      "type": "string",
+      "title": "Show ignored files",
+      "description": "on: show git-ignored files, dimmed",
+      "default": "off",
+      "options": ["on", "off"]
+    }
+  }
+}
