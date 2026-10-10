@@ -6,7 +6,7 @@ import type { RowInput, RowSpec, Seg } from './segments'
 import { effectiveStyle, isStyle, nextStyle, settingsOf } from './settings'
 import type { Settings } from './settings'
 import { STYLES } from './styles'
-import { flatten, parentOf, searchRows, sortEntries } from './tree'
+import { flatten, parentOf, relative, searchRows, sortEntries } from './tree'
 import type { Entry, TreeRow } from './tree'
 
 const PANE = 'file-tree'
@@ -57,6 +57,21 @@ async function relist($: EngineInterface, dirs: readonly string[]) {
 
     return next
   })
+}
+
+/**
+ * Every file under the root, relative to it, for search: git's list in a
+ * repository (tracked and untracked, ignored left out), else `find`.
+ */
+async function loadFiles($: EngineInterface) {
+  const r = await read($, root)
+  const run = gitTop
+    ? await $.process.run(['git', '-C', r, 'ls-files', '--cached', '--others', '--exclude-standard', '-z'], { timeoutMs: 10000 })
+    : await $.process.run(['find', r, '-maxdepth', '8', '-type', 'f', '-not', '-path', '*/.git/*', '-not', '-path', '*/node_modules/*'], { timeoutMs: 10000 })
+  const list = gitTop
+    ? run.stdout.split('\0').filter(Boolean)
+    : run.stdout.split('\n').filter(Boolean).map(p => relative(r, p))
+  await update($, files, () => list.slice(0, 50000))
 }
 
 /**
@@ -276,7 +291,13 @@ export const register: Register = (on, options) => {
           label="Search"
           placeholder="file name"
           value={search}
-          onInput={(value: string) => void update($, query, () => value)}
+          onInput={(value: string) => {
+            void (async () => {
+              await update($, query, () => value)
+              await update($, top, () => 0)
+              if (value.trim() && (await read($, files)).length === 0) await loadFiles($).catch(() => undefined)
+            })()
+          }}
           onSubmit={() => {
             void (async () => {
               const rows = await treeRows($)

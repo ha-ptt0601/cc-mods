@@ -32,7 +32,7 @@ const TREE = { command: 'tree', args: '', origin: { kind: 'composer' }, presenta
 async function setUp($: Engine, on: On) {
   on('session.cwd', async () => ({ value: '/repo' }))
   on('clock.now', async () => ({ value: 0 }))
-  on('process.run', async () => ran(128))
+  on('process.run', async (_, e) => (e.argv[0] === 'find' ? ran(0, '/repo/src/deep/match.ts\n/repo/README.md\n') : ran(128)))
   on('fs.list', async (_, e) => ({
     value: e.path === '/repo'
       ? [entry('src', 'dir'), entry('README.md', 'file')]
@@ -84,6 +84,16 @@ describe('pane', () => {
     expect((await ui.find({ key: 'style' }))?.text).toContain('ide')
     await ui.press({ key: 'style' })
     expect((await ui.find({ key: 'style' }))?.text).toContain('minimal')
+    await ui.unmount()
+  })
+})
+
+describe('search', () => {
+  test('finds a file in a folder not opened yet', async ($, on) => {
+    await setUp($, on)
+    const ui = await $.ui.mount(PANE)
+    await ui.input({ key: 'search', text: 'match', kind: 'change' })
+    expect(await drawnRows(ui)).toEqual(['/repo/src', '/repo/src/deep', '/repo/src/deep/match.ts'])
     await ui.unmount()
   })
 })
