@@ -52,9 +52,15 @@ async function drawnRows(ui: { find: (q: { key: string }) => Promise<{ props: Re
 }
 
 describe('band', () => {
-  test('draws the Files button above the prompt', async $ => {
+  test('draws the Files button beside what other plugins draw there', async ($, on) => {
+    on('ui.render', async ($, e) => {
+      const { Box, Button } = $.ui.resolve(e)
+
+      return <Box><Button key="other" label="☰ Sessions" onPress={() => undefined} /></Box>
+    })
     const ui = await $.ui.mount(BAND)
     expect((await ui.find({ key: 'files' }))?.text).toContain('Files')
+    expect((await ui.find({ key: 'other' }))?.text).toContain('Sessions')
     await ui.unmount()
   })
 })

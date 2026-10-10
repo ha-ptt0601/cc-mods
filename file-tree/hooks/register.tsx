@@ -450,12 +450,15 @@ export const register: Register = (on, options) => {
     return {}
   })
 
+  // Drawn beside what other plugins put above the prompt, not over it.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey) return next(e)
+    const below = await next(e)
     const { Box, Button } = $.ui.resolve(e)
 
     return (
-      <Box>
+      <Box gap={2}>
+        {below}
         <Button key="files" plain label="▤ Files" dimColor onPress={() => void show($)} />
       </Box>
     )
