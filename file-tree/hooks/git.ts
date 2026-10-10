@@ -1,15 +1,8 @@
+import type { FileGit, GitSnapshot, GitStatus } from '../types'
 import { isInside, join, parentOf } from './tree'
 
-export type GitStatus = 'M' | 'A' | 'U' | 'D' | 'R' | '!'
-export type FileGit = { status: GitStatus; added?: number; removed?: number }
+export type { FileGit, GitSnapshot, GitStatus }
 export type Counts = { M: number; U: number; D: number }
-export type GitSnapshot = {
-  branch: string
-  upstream: string
-  ahead: number
-  behind: number
-  files: Record<string, FileGit>
-}
 
 /**
  * A file's status from porcelain v2's `XY`: deleted, added, else modified.

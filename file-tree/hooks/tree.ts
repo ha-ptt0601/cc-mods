@@ -1,5 +1,6 @@
-/** One entry of a listed folder. */
-export type Entry = { name: string; kind: 'file' | 'dir'; mtimeMs: number; isIgnored: boolean }
+import type { Entry } from '../types'
+
+export type { Entry }
 
 /** Every listed folder's sorted entries, by the folder's absolute path. */
 export type Listing = Record<string, Entry[]>
