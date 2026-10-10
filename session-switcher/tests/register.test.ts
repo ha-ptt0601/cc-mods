@@ -1,6 +1,6 @@
 import { describe, expect, test, tier } from 'claude-code/testing'
 
-import { ago, matches, projectDir, promptText, sessionTitle, worktreePaths } from '../hooks/register'
+import { ago, countLabel, matches, projectDir, promptText, sessionTitle, worktreePaths } from '../hooks/register'
 
 tier('user')
 
@@ -77,6 +77,14 @@ describe('matches', () => {
   })
 })
 
+describe('countLabel', () => {
+  test('counts every session, or the matches while searching', async () => {
+    expect(countLabel(12, 12, '')).toBe('12 sessions')
+    expect(countLabel(1, 1, '  ')).toBe('1 session')
+    expect(countLabel(3, 12, 'login')).toBe('3 / 12')
+  })
+})
+
 describe('pane', () => {
   test('draws a search field that filters the list', async ($, on) => {
     on('session.id', async () => ({ value: 'current' }))
@@ -90,6 +98,7 @@ describe('pane', () => {
       viewport: { columns: 120, rows: 30 },
     })
     expect(await ui.find({ key: 'search' })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: '0 sessions' })).toBeDefined()
     await ui.input({ key: 'search', text: 'nothing like this', kind: 'change' })
     expect(await ui.find({ type: 'Text', text: /No session matches/ })).toBeDefined()
     await ui.unmount()

@@ -177,6 +177,16 @@ export function ago(ms: number, now: number): string {
 }
 
 /**
+ * The count in the pane's header: `12 sessions`, or `3 / 12` while a search
+ * filters the list.
+ */
+export function countLabel(shown: number, total: number, search: string): string {
+  if (search.trim() !== '') return `${shown} / ${total}`
+
+  return `${total} session${total === 1 ? '' : 's'}`
+}
+
+/**
  * Reloads the session list into state, flagging the load while it runs.
  */
 async function refresh($: EngineInterface) {
@@ -245,7 +255,8 @@ export const register: Register = on => {
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Button, Input, Text } = $.ui.resolve(e)
     const search = await read($, query)
-    const rows = (await read($, sessions)).filter(row => matches(row, search))
+    const all = await read($, sessions)
+    const rows = all.filter(row => matches(row, search))
     const current = await $.session.id()
     const now = await $.clock.now()
     const width = Math.max(10, (e.props.bodyColumns ?? 40) - 6)
@@ -253,13 +264,18 @@ export const register: Register = on => {
 
     return (
       <Box flexDirection="column">
+        <Box justifyContent="space-between">
+          <Text bold color="magenta">☰ Sessions</Text>
+          {(await read($, isLoading))
+            ? <Text dimColor>loading…</Text>
+            : <Text bold>{countLabel(rows.length, all.length, search)}</Text>}
+        </Box>
         <Box>
           <Button key="refresh" plain hotkey="r" label="Refresh" dimColor onPress={() => void refresh($)} />
           <Text>  </Text>
           <Button key="close" plain hotkey="x" label="Close" dimColor onPress={() => void $.ui.close({ id: PANE })} />
           <Text>  </Text>
           <Button key="find" plain hotkey="s" label="Search" dimColor onPress={() => void $.ui.focus({ requestId: PANE, key: 'search' })} />
-          {(await read($, isLoading)) && <Text dimColor>  loading…</Text>}
         </Box>
         <Input
           key="search"
