@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { EngineInterface, Register, Timer } from 'claude-code'
 
-import { rollUp } from './git'
+import { parseNumstat, parseStatus, rollUp, withNumstat } from './git'
 import type { RowInput, RowSpec, Seg } from './segments'
 import { effectiveStyle, isStyle, nextStyle, settingsOf } from './settings'
 import type { Settings } from './settings'
@@ -59,6 +59,38 @@ async function relist($: EngineInterface, dirs: readonly string[]) {
   })
 }
 
+let gitTimer: Timer | null = null
+
+/**
+ * Reads git status and line counts for the root's repository into state;
+ * outside a repository, clears them.
+ */
+async function refreshGit($: EngineInterface) {
+  if (!gitTop) {
+    await update($, git, () => null)
+
+    return
+  }
+  const base = ['git', '--no-optional-locks', '-C', gitTop]
+  const [status, numstat] = await Promise.all([
+    $.process.run([...base, 'status', '--porcelain=v2', '--branch', '-z'], { timeoutMs: 8000 }),
+    $.process.run([...base, 'diff', '--numstat', '-z', 'HEAD'], { timeoutMs: 8000 }).catch(() => ({ exitCode: 1, stdout: '' })),
+  ])
+  if (status.exitCode !== 0) return
+  const repo = gitTop
+  await update($, git, () => withNumstat(parseStatus(status.stdout, repo), parseNumstat(numstat.stdout, repo)))
+}
+
+/**
+ * Refreshes git once a burst of changes has settled (300 ms).
+ */
+function scheduleGit($: EngineInterface) {
+  gitTimer?.cancel()
+  gitTimer = $.clock.after(300, () => {
+    void refreshGit($).catch(() => undefined)
+  })
+}
+
 /**
  * Every file under the root, relative to it, for search: git's list in a
  * repository (tracked and untracked, ignored left out), else `find`.
@@ -90,6 +122,7 @@ async function reset($: EngineInterface) {
   await update($, top, () => 0)
   await update($, query, () => '')
   await update($, files, () => [])
+  await refreshGit($).catch(() => undefined)
   await relist($, [cwd])
 }
 
@@ -206,6 +239,22 @@ export const register: Register = (on, options) => {
     }
 
     return { text: await show($) }
+  })
+
+  on('classic.SessionStart', async ($, e, next) => {
+    const result = await next(e)
+    const run = await $.process.run(['git', '-C', e.cwd, 'rev-parse', '--absolute-git-dir'], { timeoutMs: 5000 })
+      .catch(() => ({ exitCode: 1, stdout: '' }))
+    const dir = run.exitCode === 0 ? run.stdout.trim() : ''
+
+    return dir ? { ...result, watchPaths: [...(result.watchPaths ?? []), `${dir}/index`, `${dir}/HEAD`] } : result
+  })
+
+  on('classic.FileChanged', async ($, e, next) => {
+    const result = await next(e)
+    if (/\/(index|HEAD)$/.test(e.file_path)) scheduleGit($)
+
+    return result
   })
 
   on('ui.message', async ($, e, next) => {

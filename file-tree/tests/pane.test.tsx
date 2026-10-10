@@ -97,3 +97,26 @@ describe('search', () => {
     await ui.unmount()
   })
 })
+
+describe('git', () => {
+  test('marks a modified file and shows the branch', async ($, on) => {
+    on('session.cwd', async () => ({ value: '/repo' }))
+    on('clock.now', async () => ({ value: 0 }))
+    on('ui.open', async () => ({ value: { isPlaced: true } }))
+    on('fs.list', async (_, e) => ({ value: e.path === '/repo' ? [entry('a.ts', 'file')] : [] }))
+    on('process.run', async (_, e) => {
+      const args = e.argv.join(' ')
+      if (args.includes('rev-parse')) return ran(0, '/repo\n')
+      if (args.includes('status')) return ran(0, ['# branch.head main', '1 .M N... 100644 100644 100644 a b a.ts', ''].join('\0'))
+      if (args.includes('numstat')) return ran(0, '4\t1\ta.ts\0')
+
+      return ran(1)
+    })
+    await $.command.run(TREE)
+    const ui = await $.ui.mount(PANE)
+    const rows = (await ui.find({ key: 'rows' }))?.props.props as { rows: { right: { t: string }[] }[] }
+    expect(rows.rows[0]?.right.map(s => s.t).join('')).toBe('M')
+    expect(JSON.stringify(await ui.drawn())).toContain('main')
+    await ui.unmount()
+  })
+})
