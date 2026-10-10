@@ -1,4 +1,6 @@
+import type { On } from 'claude-code'
 import { describe, expect, test, tier } from 'claude-code/testing'
+import type { Engine } from 'claude-code/testing'
 
 tier('user')
 
@@ -10,10 +12,78 @@ const BAND = {
   viewport: { columns: 80, rows: 24 },
 } as const
 
+const PANE = {
+  plugin: 'file-tree',
+  surface: 'terminal',
+  component: 'Pane',
+  requestId: 'file-tree',
+  props: { title: 'Files', isFocused: true, bodyColumns: 48, placement: 'dock', scroll: { offset: 0, bodyRows: 30 }, view: {} },
+  viewport: { columns: 120, rows: 40 },
+} as const
+
+const entry = (name: string, kind: 'file' | 'dir') => ({ name, kind, size: 0, mtimeMs: 0, isLink: false })
+const ran = (exitCode: number, stdout = '') => ({ value: { exitCode, stdout, stderr: '', isStdoutTruncated: false, isStderrTruncated: false } })
+const TREE = { command: 'tree', args: '', origin: { kind: 'composer' }, presentation: { isFullscreen: true, columns: 120 } } as const
+
+/**
+ * Mocks the engine under a small folder that is not a git repository, and
+ * opens the tree on it.
+ */
+async function setUp($: Engine, on: On) {
+  on('session.cwd', async () => ({ value: '/repo' }))
+  on('clock.now', async () => ({ value: 0 }))
+  on('process.run', async () => ran(128))
+  on('fs.list', async (_, e) => ({
+    value: e.path === '/repo'
+      ? [entry('src', 'dir'), entry('README.md', 'file')]
+      : e.path === '/repo/src' ? [entry('app.ts', 'file')] : [],
+  }))
+  on('ui.open', async () => ({ value: { isPlaced: true } }))
+  await $.command.run(TREE)
+}
+
+/**
+ * The paths of the rows the rows region draws.
+ */
+async function drawnRows(ui: { find: (q: { key: string }) => Promise<{ props: Record<string, unknown> } | undefined> }): Promise<string[]> {
+  const rows = (await ui.find({ key: 'rows' }))?.props.props as { rows?: { id: string }[] } | undefined
+
+  return (rows?.rows ?? []).map(r => r.id)
+}
+
 describe('band', () => {
   test('draws the Files button above the prompt', async $ => {
     const ui = await $.ui.mount(BAND)
     expect((await ui.find({ key: 'files' }))?.text).toContain('Files')
+    await ui.unmount()
+  })
+})
+
+describe('pane', () => {
+  test('lists the root and opens a folder with →', async ($, on) => {
+    await setUp($, on)
+    const ui = await $.ui.mount(PANE)
+    expect(await drawnRows(ui)).toEqual(['/repo/src', '/repo/README.md'])
+    await ui.key({ key: 'right', in: 'rows' })
+    expect(await drawnRows(ui)).toEqual(['/repo/src', '/repo/src/app.ts', '/repo/README.md'])
+    await ui.unmount()
+  })
+
+  test('draws the same rows on the desktop surface', async ($, on) => {
+    await setUp($, on)
+    const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+    expect(await drawnRows(ui)).toContain('/repo/README.md')
+    await ui.unmount()
+  })
+
+  test('t cycles the style', async ($, on) => {
+    on('store.get', async () => ({ value: undefined }))
+    on('store.set', async () => ({ value: undefined }))
+    await setUp($, on)
+    const ui = await $.ui.mount(PANE)
+    expect((await ui.find({ key: 'style' }))?.text).toContain('ide')
+    await ui.press({ key: 'style' })
+    expect((await ui.find({ key: 'style' }))?.text).toContain('minimal')
     await ui.unmount()
   })
 })
