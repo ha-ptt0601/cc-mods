@@ -1,6 +1,6 @@
 import { describe, expect, test, tier } from 'claude-code/testing'
 
-import { ago, countLabel, matches, projectDir, promptText, sessionTitle, worktreePaths } from '../hooks/register'
+import { ago, bandLabel, countLabel, matches, projectDir, promptText, sessionTitle, worktreePaths } from '../hooks/register'
 
 tier('user')
 
@@ -126,6 +126,13 @@ describe('rows', () => {
     expect(await ui.find({ type: 'Text', text: '[feat-search] ' })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: '(this session)' })).toBeDefined()
     await ui.unmount()
+  })
+})
+
+describe('bandLabel', () => {
+  test('counts the sessions once the list has loaded', async () => {
+    expect(bandLabel(0)).toBe('☰ Sessions')
+    expect(bandLabel(12)).toBe('☰ Sessions (12)')
   })
 })
 

@@ -187,6 +187,14 @@ export function countLabel(shown: number, total: number, search: string): string
 }
 
 /**
+ * The label of the button above the prompt: `☰ Sessions (12)`, with no
+ * count until the list has loaded.
+ */
+export function bandLabel(count: number): string {
+  return count > 0 ? `☰ Sessions (${count})` : '☰ Sessions'
+}
+
+/**
  * Reloads the session list into state, flagging the load while it runs.
  */
 async function refresh($: EngineInterface) {
@@ -226,6 +234,7 @@ export const register: Register = on => {
       description: "Open this project's sessions and pick one to resume (close: hide it)",
       argumentHint: '[close]',
     })
+    void refresh($)
 
     return started
   })
@@ -247,7 +256,7 @@ export const register: Register = on => {
 
     return (
       <Box>
-        <Button key="toggle" plain label="☰ Sessions" dimColor onPress={() => void show($)} />
+        <Button key="toggle" plain label={bandLabel((await read($, sessions)).length)} dimColor onPress={() => void show($)} />
       </Box>
     )
   })
