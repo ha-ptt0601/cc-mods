@@ -120,3 +120,16 @@ describe('git', () => {
     await ui.unmount()
   })
 })
+
+describe('activity', () => {
+  test('a Read lights the file and opens its folder', async ($, on) => {
+    on('tool.call', async () => ({ result: { type: 'text', file: { filePath: '/repo/src/app.ts', content: '', numLines: 0, startLine: 1, totalLines: 0 } } }))
+    await setUp($, on)
+    const ui = await $.ui.mount(PANE)
+    await $.tool.call({ tool: 'Read', file_path: '/repo/src/app.ts' })
+    const rows = (await ui.find({ key: 'rows' }))?.props.props as { rows: { id: string; left: { t: string; tone?: string }[] }[] }
+    const app = rows.rows.find(r => r.id === '/repo/src/app.ts')
+    expect(app?.left.find(s => s.t === 'app.ts')?.tone).toBe('read')
+    await ui.unmount()
+  })
+})

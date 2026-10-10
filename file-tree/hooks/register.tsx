@@ -1,12 +1,13 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, Timer } from 'claude-code'
 
+import { FADE_MS, endMarks, isCommit, pruneMarks, startMarks, statusLine, targetOf } from './activity'
 import { parseNumstat, parseStatus, rollUp, withNumstat } from './git'
 import type { RowInput, RowSpec, Seg } from './segments'
 import { effectiveStyle, isStyle, nextStyle, settingsOf } from './settings'
 import type { Settings } from './settings'
 import { STYLES } from './styles'
-import { flatten, parentOf, relative, searchRows, sortEntries } from './tree'
+import { flatten, foldersTo, isInside, parentOf, relative, searchRows, sortEntries } from './tree'
 import type { Entry, TreeRow } from './tree'
 
 const PANE = 'file-tree'
@@ -161,6 +162,50 @@ async function moveTo($: EngineInterface, rows: readonly TreeRow[], path: string
 }
 
 /**
+ * Opens the folders down to `path` and, when following Claude, scrolls to it.
+ */
+async function reveal($: EngineInterface, path: string) {
+  const r = await read($, root)
+  const dirs = foldersTo(r, path)
+  const listed = await read($, listing)
+  const missing = dirs.filter(dir => !listed[dir])
+  if (missing.length) await relist($, missing)
+  await update($, open, list => [...new Set([...list, ...dirs])])
+  if (!settings.follow || (await read($, query)).trim()) return
+  const rows = await treeRows($)
+  const at = rows.findIndex(row => row.path === path)
+  if (at >= 0) await update($, top, t => (at < t || at >= t + room ? Math.max(0, at - Math.floor(room / 2)) : t))
+}
+
+/**
+ * Drops the marks that finished fading.
+ */
+async function prune($: EngineInterface) {
+  const now = await $.clock.now()
+  await update($, marks, list => pruneMarks(list, now))
+}
+
+/**
+ * After a shell command: marks a new commit's files green, and refreshes the
+ * open folders and git.
+ */
+async function afterBash($: EngineInterface, command: string, failed: boolean) {
+  const r = await read($, root)
+  if (!r) return
+  if (!failed && gitTop && isCommit(command)) {
+    const run = await $.process.run(['git', '-C', gitTop, 'diff-tree', '--no-commit-id', '--name-only', '-r', '-z', 'HEAD'], { timeoutMs: 5000 })
+    const repo = gitTop
+    const paths = run.stdout.split('\0').filter(Boolean).map(p => `${repo}/${p}`).filter(p => isInside(r, p))
+    const now = await $.clock.now()
+    await update($, marks, list => endMarks(startMarks(list, paths, 'commit'), paths, now))
+    if (paths[0]) await reveal($, paths[0])
+    $.clock.after(FADE_MS + 100, () => void prune($))
+  }
+  await relist($, [r, ...(await read($, open))])
+  scheduleGit($)
+}
+
+/**
  * Acts on a key the rows region sent: move, open, close, page.
  */
 async function onKey($: EngineInterface, key: string) {
@@ -257,6 +302,39 @@ export const register: Register = (on, options) => {
     return result
   })
 
+  on('tool.call', async ($, e, next) => {
+    let target: { kind: 'read' | 'write' | 'commit'; path: string } | null = null
+    try {
+      const r = await read($, root)
+      const found = r ? targetOf(e as unknown as { tool: string } & Record<string, unknown>, await $.session.cwd()) : null
+      if (found && isInside(r, found.path)) {
+        target = found
+        await update($, marks, list => startMarks(list, [found.path], found.kind))
+        await reveal($, found.path)
+      }
+    } catch {
+      target = null
+    }
+    const result = await next(e)
+    try {
+      if (target) {
+        const done = target
+        const now = await $.clock.now()
+        await update($, marks, list => endMarks(list, [done.path], now))
+        $.clock.after(FADE_MS + 100, () => void prune($))
+        if (done.kind === 'write') {
+          await relist($, [parentOf(done.path)])
+          scheduleGit($)
+        }
+      }
+      if (e.tool === 'Bash') void afterBash($, e.command, Boolean(result.deny || result.isError)).catch(() => undefined)
+    } catch {
+      // The tree's bookkeeping never changes the tool's result.
+    }
+
+    return result
+  })
+
   on('ui.message', async ($, e, next) => {
     if (e.requestId !== PANE || e.element !== 'rows' || !e.data || typeof e.data !== 'object') return next(e)
     const data = e.data as { key?: unknown; press?: unknown; open?: unknown }
@@ -301,7 +379,7 @@ export const register: Register = (on, options) => {
     const ctx = { icons: settings.icons, now: await $.clock.now() }
     const r = await read($, root)
     const snap = await read($, git)
-    const header = style.header({ name: r.split('/').pop() || r, git: snap, dirty: Boolean(snap && Object.keys(snap.files).length), status: '' }, ctx)
+    const header = style.header({ name: r.split('/').pop() || r, git: snap, dirty: Boolean(snap && Object.keys(snap.files).length), status: statusLine(await read($, marks), r) }, ctx)
     room = Math.max(3, (e.props.scroll?.bodyRows ?? 24) - header.length - 4)
     const all = await decorate($, await treeRows($))
     const from = Math.max(0, Math.min(await read($, top), Math.max(0, all.length - room)))
