@@ -16,23 +16,32 @@
   <rect x="12" y="176" width="140" height="24" fill="#2a2a2a"/>
   <text x="20" y="193" fill="#d4d4d4"><tspan fill="#9a9a9a">❯</tspan> /sessions</text>
   <text x="20" y="217" fill="#9a9a9a">&#160;&#160;⎿ Sessions: press 1-9 or Enter to resume</text>
-  <text x="20" y="318" fill="#7a7a7a">☰ Sessions</text>
+  <text x="20" y="318" fill="#7a7a7a">☰ Sessions (8)</text>
   <line x1="12" y1="330" x2="560" y2="330" stroke="#444"/>
   <text x="20" y="354" fill="#d4d4d4"><tspan fill="#9a9a9a">❯</tspan> ▌</text>
 
   <!-- sessions pane -->
   <line x1="576" y1="30" x2="576" y2="380" stroke="#555"/>
-  <text x="592" y="56" fill="#d4d4d4" font-weight="bold">Sessions</text>
-  <text x="592" y="82" fill="#7a7a7a">Refresh&#160;&#160;Close&#160;&#160;Search</text>
-  <text x="592" y="106" fill="#d4d4d4">Search: <tspan fill="#7a7a7a">session name or worktree</tspan></text>
-  <text x="592" y="128" fill="#7a7a7a" font-size="12">1-9 resume · s search · r refresh · x close · Esc back</text>
-  <text x="592" y="160" fill="#4ec94e" font-weight="bold">▸ Add dark mode toggle<tspan fill="#7a7a7a" font-weight="normal">&#160;&#160;(this session)</tspan></text>
-  <rect x="588" y="168" width="224" height="22" fill="#264f78"/>
-  <text x="592" y="184" fill="#ffffff">1: Fix login redirect loop<tspan fill="#7a7a7a">&#160;&#160;3m ago</tspan></text>
-  <text x="592" y="208" fill="#d4d4d4">2: Add search endpoint<tspan fill="#7a7a7a">&#160;&#160;[feat-search] 12m ago</tspan></text>
-  <text x="592" y="232" fill="#d4d4d4">3: Write API docs<tspan fill="#7a7a7a">&#160;&#160;1h ago</tspan></text>
-  <text x="592" y="256" fill="#d4d4d4">4: Upgrade to Node 22<tspan fill="#7a7a7a">&#160;&#160;[upgrade-node] 3h ago</tspan></text>
-  <text x="592" y="280" fill="#d4d4d4">5: Debug flaky e2e test<tspan fill="#7a7a7a">&#160;&#160;1d ago</tspan></text>
-  <text x="592" y="304" fill="#d4d4d4">6: Review PR #42<tspan fill="#7a7a7a">&#160;&#160;[review-42] 2d ago</tspan></text>
-  <text x="592" y="328" fill="#d4d4d4">7: Set up CI cache<tspan fill="#7a7a7a">&#160;&#160;4d ago</tspan></text>
+  <text x="592" y="56" fill="#d670d6" font-weight="bold">☰ Sessions</text>
+  <text x="1084" y="56" fill="#d4d4d4" font-weight="bold" text-anchor="end">8 sessions</text>
+  <text x="592" y="80" fill="#7a7a7a"><tspan fill="#8fa3f0">r</tspan>: Refresh&#160;&#160;<tspan fill="#8fa3f0">x</tspan>: Close&#160;&#160;<tspan fill="#8fa3f0">s</tspan>: Search</text>
+  <text x="592" y="104" fill="#d4d4d4">Search: <tspan fill="#7a7a7a">session name or worktree</tspan></text>
+  <text x="592" y="126" fill="#7a7a7a" font-size="12">1-9 resume · s search · r refresh · x close · Esc back</text>
+  <text x="592" y="154" fill="#4ec94e" font-weight="bold">▸ Add dark mode toggle</text>
+  <text x="1084" y="154" fill="#7a7a7a" text-anchor="end">(this session)</text>
+  <rect x="588" y="162" width="223" height="22" fill="#264f78"/>
+  <text x="592" y="178" fill="#ffffff"><tspan fill="#8fa3f0">1</tspan>: Fix login redirect loop</text>
+  <text x="1084" y="178" fill="#7a7a7a" text-anchor="end">3m ago</text>
+  <text x="592" y="202" fill="#d4d4d4"><tspan fill="#8fa3f0">2</tspan>: Add search endpoint</text>
+  <text x="1084" y="202" fill="#7a7a7a" text-anchor="end"><tspan fill="#4fc1e9">[feat-search]&#160;</tspan>12m ago</text>
+  <text x="592" y="226" fill="#d4d4d4"><tspan fill="#8fa3f0">3</tspan>: Write API docs</text>
+  <text x="1084" y="226" fill="#7a7a7a" text-anchor="end">1h ago</text>
+  <text x="592" y="250" fill="#d4d4d4"><tspan fill="#8fa3f0">4</tspan>: Upgrade to Node 22</text>
+  <text x="1084" y="250" fill="#7a7a7a" text-anchor="end"><tspan fill="#4fc1e9">[upgrade-node]&#160;</tspan>3h ago</text>
+  <text x="592" y="274" fill="#d4d4d4"><tspan fill="#8fa3f0">5</tspan>: Debug flaky e2e test</text>
+  <text x="1084" y="274" fill="#7a7a7a" text-anchor="end">1d ago</text>
+  <text x="592" y="298" fill="#d4d4d4"><tspan fill="#8fa3f0">6</tspan>: Review PR #42</text>
+  <text x="1084" y="298" fill="#7a7a7a" text-anchor="end"><tspan fill="#4fc1e9">[review-42]&#160;</tspan>2d ago</text>
+  <text x="592" y="322" fill="#d4d4d4"><tspan fill="#8fa3f0">7</tspan>: Set up CI cache</text>
+  <text x="1084" y="322" fill="#7a7a7a" text-anchor="end">4d ago</text>
 </svg>
