@@ -133,3 +133,37 @@ describe('activity', () => {
     await ui.unmount()
   })
 })
+
+describe('preview', () => {
+  const withFile = (on: On) => {
+    on('fs.stat', async () => ({ value: { kind: 'file', size: 20, mtimeMs: 0, isLink: false } }))
+    on('fs.read', async () => ({ value: '# Hello\n\nexample text\n' }))
+  }
+  const previewOf = async (ui: { find: (q: { key: string }) => Promise<{ props: Record<string, unknown> } | undefined> }, key: string) =>
+    ((await ui.find({ key }))?.props.props as { preview?: { markdown: boolean; text: string } } | undefined)?.preview
+
+  test('replace: Enter on a file shows it, ← goes back', async ($, on) => {
+    withFile(on)
+    await setUp($, on)
+    const ui = await $.ui.mount(PANE)
+    await ui.key({ key: 'down', in: 'rows' })
+    await ui.key({ key: 'down', in: 'rows' })
+    await ui.key({ key: 'return', in: 'rows' })
+    expect(await previewOf(ui, 'rows')).toMatchObject({ markdown: true })
+    await ui.key({ key: 'left', in: 'rows' })
+    expect(await drawnRows(ui)).toContain('/repo/README.md')
+    await ui.unmount()
+  })
+
+  test('split: the tree stays and the preview draws below', { options: { previewLayout: 'split' } }, async ($, on) => {
+    withFile(on)
+    await setUp($, on)
+    const ui = await $.ui.mount(PANE)
+    await ui.key({ key: 'down', in: 'rows' })
+    await ui.key({ key: 'down', in: 'rows' })
+    await ui.key({ key: 'return', in: 'rows' })
+    expect(await previewOf(ui, 'preview')).toMatchObject({ markdown: true })
+    expect(await drawnRows(ui)).toContain('/repo/README.md')
+    await ui.unmount()
+  })
+})

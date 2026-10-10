@@ -3,6 +3,7 @@ import type { EngineInterface, Register, Timer } from 'claude-code'
 
 import { FADE_MS, endMarks, isCommit, pruneMarks, startMarks, statusLine, targetOf } from './activity'
 import { parseNumstat, parseStatus, rollUp, withNumstat } from './git'
+import { MAX_BYTES, clip, isBinary, isMarkdown, maxTop, openArgv, windowOf } from './preview'
 import type { RowInput, RowSpec, Seg } from './segments'
 import { effectiveStyle, isStyle, nextStyle, settingsOf } from './settings'
 import type { Settings } from './settings'
@@ -24,10 +25,18 @@ const marks = atom({ plugin: 'file-tree', key: 'marks' } as const, [])
 const git = atom({ plugin: 'file-tree', key: 'git' } as const, null)
 const note = atom({ plugin: 'file-tree', key: 'note' } as const, '')
 const styleName = atom({ plugin: 'file-tree', key: 'style' } as const, 'ide')
+const preview = atom({ plugin: 'file-tree', key: 'preview' } as const, '')
+const previewText = atom({ plugin: 'file-tree', key: 'previewText' } as const, '')
+const previewNote = atom({ plugin: 'file-tree', key: 'previewNote' } as const, '')
+const previewTop = atom({ plugin: 'file-tree', key: 'previewTop' } as const, 0)
 
 let settings: Settings = settingsOf(undefined)
 /** Rows the tree had room for at the last drawing, for keeping the cursor in view. */
 let room = 20
+/** Lines the preview had room for at the last drawing. */
+let previewRoom = 20
+/** The platform, for the default opener: found on first use. */
+let os: 'darwin' | 'linux' | 'win32' | undefined
 /** The repository's top folder: undefined until checked, null outside a repo. */
 let gitTop: string | null | undefined
 
@@ -159,6 +168,8 @@ async function moveTo($: EngineInterface, rows: readonly TreeRow[], path: string
   if (at < 0) return
   await update($, cursor, () => path)
   await update($, top, t => (at < t ? at : at >= t + room ? at - room + 1 : t))
+  const row = rows[at]
+  if (settings.layout === 'split' && (await read($, preview)) && row?.kind === 'file') await showPreview($, row.path).catch(() => undefined)
 }
 
 /**
@@ -206,9 +217,80 @@ async function afterBash($: EngineInterface, command: string, failed: boolean) {
 }
 
 /**
+ * Reads `path` into the preview: refused when outside the root, too large or
+ * binary, cut to whole lines when long.
+ */
+async function showPreview($: EngineInterface, path: string) {
+  const r = await read($, root)
+  let text = ''
+  let why = ''
+  if (!isInside(r, path)) why = 'outside the tree'
+  else {
+    const st = await $.fs.stat(path)
+    if (st.size > MAX_BYTES) why = `${Math.round(st.size / 1e6)} MB, too large to preview`
+    else {
+      const raw = await $.fs.read(path)
+      if (isBinary(raw)) why = 'binary file'
+      else {
+        const cut = clip(raw)
+        text = cut.text
+        why = cut.note
+      }
+    }
+  }
+  await update($, preview, () => path)
+  await update($, previewText, () => text)
+  await update($, previewNote, () => why)
+  await update($, previewTop, () => 0)
+}
+
+/**
+ * Closes the preview and returns to the tree.
+ */
+async function closePreview($: EngineInterface) {
+  await update($, preview, () => '')
+  await update($, previewText, () => '')
+}
+
+/**
+ * Scrolls the preview by `by` lines, clamped.
+ */
+async function scrollPreview($: EngineInterface, by: number) {
+  const last = maxTop(await read($, previewText), previewRoom)
+  await update($, previewTop, t => Math.max(0, Math.min(last, t + by)))
+}
+
+/**
+ * Opens a file with the Open with command or the default app.
+ */
+async function openExternal($: EngineInterface, path: string) {
+  if (!os) {
+    const uname = await $.process.run(['uname', '-s'], { timeoutMs: 3000 }).catch(() => ({ exitCode: 1, stdout: '' }))
+    os = uname.exitCode !== 0 ? 'win32' : uname.stdout.trim() === 'Darwin' ? 'darwin' : 'linux'
+  }
+  const run = await $.process.run(openArgv(settings.openWith, path, os), { timeoutMs: 10000 })
+    .catch((error: unknown) => ({ exitCode: 1, stdout: '', stderr: String(error) }))
+  if (run.exitCode !== 0) await update($, note, () => `Could not open ${path.split('/').pop()}: ${run.stderr.trim().slice(0, 80)}`)
+}
+
+/**
  * Acts on a key the rows region sent: move, open, close, page.
  */
 async function onKey($: EngineInterface, key: string) {
+  const shown = await read($, preview)
+  if (shown && settings.layout === 'replace') {
+    const page = Math.max(1, previewRoom - 2)
+    const by: Record<string, number> = { up: -1, k: -1, down: 1, j: 1, pageup: -page, pagedown: page, home: -1e9, end: 1e9 }
+    if (key === 'left' || key === 'h' || key === 'escape') await closePreview($)
+    else if (key in by) await scrollPreview($, by[key] ?? 0)
+
+    return
+  }
+  if (shown && (key === 'pageup' || key === 'pagedown')) {
+    await scrollPreview($, (key === 'pageup' ? -1 : 1) * Math.max(1, previewRoom - 2))
+
+    return
+  }
   const rows = await treeRows($)
   const cur = await read($, cursor)
   const at = Math.max(0, rows.findIndex(row => row.path === cur))
@@ -229,7 +311,10 @@ async function onKey($: EngineInterface, key: string) {
   else if (key === 'left' || key === 'h') {
     if (row.kind === 'dir' && row.isOpen) await toggle($, row.path)
     else if (parentOf(row.path) !== (await read($, root))) await moveTo($, rows, parentOf(row.path))
-  } else if ((key === 'return' || key === ' ') && row.kind === 'dir') await toggle($, row.path)
+  } else if (key === 'return' || key === ' ') {
+    if (row.kind === 'dir') await toggle($, row.path)
+    else await showPreview($, row.path).catch(error => update($, note, () => `Could not read ${row.name}: ${String(error)}`))
+  }
 }
 
 /**
@@ -344,12 +429,21 @@ export const register: Register = (on, options) => {
       await moveTo($, rows, data.press)
       const row = rows.find(r => r.path === data.press)
       if (row?.kind === 'dir') await toggle($, row.path)
+    } else if (typeof data.open === 'string') {
+      const row = rows.find(r => r.path === data.open)
+      if (row?.kind === 'file') await showPreview($, row.path).catch(() => undefined)
+      else if (row) await toggle($, row.path)
     }
 
     return {}
   })
 
   on('ui.scroll', { component: 'Pane', requestId: PANE }, async ($, e) => {
+    if (await read($, preview)) {
+      await scrollPreview($, Math.sign(e.by) * Math.max(3, Math.abs(e.by)))
+
+      return {}
+    }
     const total = (await treeRows($)).length
     await update($, top, t => Math.max(0, Math.min(Math.max(0, total - room), t + Math.sign(e.by) * Math.max(3, Math.abs(e.by)))))
 
@@ -380,12 +474,39 @@ export const register: Register = (on, options) => {
     const r = await read($, root)
     const snap = await read($, git)
     const header = style.header({ name: r.split('/').pop() || r, git: snap, dirty: Boolean(snap && Object.keys(snap.files).length), status: statusLine(await read($, marks), r) }, ctx)
-    room = Math.max(3, (e.props.scroll?.bodyRows ?? 24) - header.length - 4)
+    const shown = await read($, preview)
+    const body = Math.max(6, (e.props.scroll?.bodyRows ?? 24) - header.length - 4)
+    const isSplit = Boolean(shown) && settings.layout === 'split'
+    room = isSplit ? Math.max(3, Math.floor(body / 2)) : body
+    previewRoom = shown ? (isSplit ? body - room - 2 : body - 2) : previewRoom
     const all = await decorate($, await treeRows($))
     const from = Math.max(0, Math.min(await read($, top), Math.max(0, all.length - room)))
     const specs = all.slice(from, from + room).map(row => style.row(row, ctx))
     const search = await read($, query)
     const message = await read($, note)
+    const text = await read($, previewText)
+    const win = windowOf(text, await read($, previewTop), previewRoom)
+    const previewProps = { rows: [], active: '', preview: { text: isMarkdown(shown) ? text : win.source, path: shown, startLine: win.startLine, markdown: isMarkdown(shown) } }
+    const snapFile = shown ? snap?.files[shown] : undefined
+    const facts = [
+      `${text.split('\n').length} lines`,
+      snapFile ? `${snapFile.status} +${snapFile.added ?? 0} -${snapFile.removed ?? 0}` : '',
+      await read($, previewNote),
+    ].filter(Boolean).join(' · ')
+    const previewBar = (
+      <Box key="pbar" justifyContent="space-between">
+        <Box gap={1}>
+          {!isSplit && <Button key="back" plain label="← files" onPress={() => void closePreview($)} />}
+          <Text bold>{shown.split('/').pop()}</Text>
+          <Text dimColor>{facts}</Text>
+        </Box>
+        <Box gap={1}>
+          <Button key="open-ext" plain label="↗" onPress={() => void openExternal($, shown)} />
+          {isSplit && <Button key="close-preview" plain label="✕" onPress={() => void closePreview($)} />}
+        </Box>
+      </Box>
+    )
+    const tree = <Client key="rows" module="./rows.client.tsx" props={{ rows: specs, active: await read($, cursor) }} />
 
     return (
       <Box flexDirection="column">
@@ -434,7 +555,13 @@ export const register: Register = (on, options) => {
           }}
         />
         {message !== '' && <Text color="warning">{message}</Text>}
-        <Client key="rows" module="./rows.client.tsx" props={{ rows: specs, active: await read($, cursor) }} />
+        {shown && !isSplit && previewBar}
+        {shown && !isSplit
+          ? <Client key="rows" module="./rows.client.tsx" props={previewProps} />
+          : tree}
+        {isSplit && <Text key="div" dimColor>{'─'.repeat(Math.max(10, (e.props.bodyColumns ?? 40) - 2))}</Text>}
+        {isSplit && previewBar}
+        {isSplit && <Client key="preview" module="./rows.client.tsx" props={previewProps} />}
       </Box>
     )
   })
