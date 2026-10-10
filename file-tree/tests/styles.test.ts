@@ -1,5 +1,6 @@
 import { describe, expect, test, tier } from 'claude-code/testing'
 
+import { TONES, sweepColor } from '../hooks/rows.client'
 import type { RowInput, Seg } from '../hooks/segments'
 import { STYLES } from '../hooks/styles'
 
@@ -62,5 +63,17 @@ describe('headers', () => {
       expect(text(first?.left ?? [])).toContain('repo')
       expect(text(first?.right ?? [])).toContain('main')
     }
+  })
+})
+
+describe('sweepColor', () => {
+  test('the band is brightest at its center and moves with the phase', async () => {
+    const palette = TONES.write
+    const at = (i: number, phase: number) => palette.indexOf(sweepColor(i, phase, 10, palette))
+    const lit = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => at(i, 5))
+    const brightest = lit.indexOf(Math.max(...lit))
+    expect(Math.max(...lit)).toBe(palette.length - 1)
+    const later = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => at(i, 7))
+    expect(later.indexOf(Math.max(...later))).toBeGreaterThan(brightest)
   })
 })
