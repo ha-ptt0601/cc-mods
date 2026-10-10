@@ -286,7 +286,7 @@ export const register: Register = on => {
         </Box>
         <Input
           key="search"
-          label="Search: "
+          label="Search"
           placeholder="session name or worktree"
           value={search}
           submitLabel="resume first"
