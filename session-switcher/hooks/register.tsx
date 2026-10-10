@@ -249,13 +249,16 @@ export const register: Register = on => {
     return { text: await show($) }
   })
 
-  // The "icon": one small button above the prompt that opens the pane.
+  // The "icon": one small button above the prompt that opens the pane, drawn
+  // beside what other plugins put there, not over it.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey) return next(e)
+    const below = await next(e)
     const { Box, Button } = $.ui.resolve(e)
 
     return (
-      <Box>
+      <Box gap={2}>
+        {below}
         <Button key="toggle" plain label={bandLabel((await read($, sessions)).length)} dimColor onPress={() => void show($)} />
       </Box>
     )

@@ -137,7 +137,8 @@ describe('bandLabel', () => {
 })
 
 describe('band', () => {
-  test('draws the Sessions button above the prompt', async $ => {
+  test('draws the Sessions button beside what other plugins draw there', async ($, on) => {
+    on('ui.render', async ($, e) => $.ui.resolve(e).Text({ children: '▤ Files' }))
     const ui = await $.ui.mount({
       plugin: 'session-switcher',
       surface: 'terminal',
@@ -146,6 +147,7 @@ describe('band', () => {
       viewport: { columns: 80, rows: 24 },
     })
     expect((await ui.find({ key: 'toggle' }))?.text).toContain('Sessions')
+    expect((await ui.find({ type: 'Text', text: '▤ Files' }))).toBeDefined()
     await ui.unmount()
   })
 })
