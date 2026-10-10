@@ -270,11 +270,9 @@ export const register: Register = on => {
             ? <Text dimColor>loading…</Text>
             : <Text bold>{countLabel(rows.length, all.length, search)}</Text>}
         </Box>
-        <Box>
+        <Box gap={2}>
           <Button key="refresh" plain hotkey="r" label="Refresh" dimColor onPress={() => void refresh($)} />
-          <Text>  </Text>
           <Button key="close" plain hotkey="x" label="Close" dimColor onPress={() => void $.ui.close({ id: PANE })} />
-          <Text>  </Text>
           <Button key="find" plain hotkey="s" label="Search" dimColor onPress={() => void $.ui.focus({ requestId: PANE, key: 'search' })} />
         </Box>
         <Input
