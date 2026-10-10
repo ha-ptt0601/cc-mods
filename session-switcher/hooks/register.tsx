@@ -298,16 +298,16 @@ export const register: Register = on => {
           const title = row.title.slice(0, Math.max(5, width - when.length - 4))
           if (isCurrent) {
             return (
-              <Box key={row.id}>
+              <Box key={row.id} justifyContent="space-between" gap={2}>
                 <Text color="green" bold>▸ {title}</Text>
-                <Text dimColor>  (this session)</Text>
+                <Text dimColor>(this session)</Text>
               </Box>
             )
           }
           const slot = others.indexOf(row)
 
           return (
-            <Box key={row.id}>
+            <Box key={row.id} justifyContent="space-between" gap={2}>
               <Button
                 key={row.id}
                 plain
@@ -316,7 +316,7 @@ export const register: Register = on => {
                 label={slot < 9 ? title : `   ${title}`}
                 onPress={() => resume($, row)}
               />
-              <Text dimColor>  {when}</Text>
+              <Text dimColor>{when}</Text>
             </Box>
           )
         })}
