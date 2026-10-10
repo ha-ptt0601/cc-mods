@@ -316,7 +316,10 @@ export const register: Register = on => {
                 label={slot < 9 ? title : `   ${title}`}
                 onPress={() => resume($, row)}
               />
-              <Text dimColor>{when}</Text>
+              <Box flexShrink={0}>
+                {row.worktree && <Text color="cyan">[{row.worktree}] </Text>}
+                <Text dimColor>{ago(row.mtimeMs, now)} ago</Text>
+              </Box>
             </Box>
           )
         })}

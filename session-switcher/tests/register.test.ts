@@ -105,6 +105,30 @@ describe('pane', () => {
   })
 })
 
+describe('rows', () => {
+  test('numbers each other session and tags its worktree', async ($, on) => {
+    on('session.id', async () => ({ value: 'current' }))
+    on('clock.now', async () => ({ value: 0 }))
+    const rows = [
+      { id: 'current', title: 'Fix login bug', mtimeMs: 0 },
+      { id: 'a', title: 'Add a search field', mtimeMs: 0, worktree: 'feat-search' },
+    ]
+    on('state.get', async (_, e, next) => (e.key === 'sessions' ? { value: { value: rows, version: 1 } } : next(e)))
+    const ui = await $.ui.mount({
+      plugin: 'session-switcher',
+      surface: 'terminal',
+      component: 'Pane',
+      requestId: 'sessions',
+      props: { title: 'Sessions', isFocused: true, bodyColumns: 60, placement: 'dock', scroll: { offset: 0, bodyRows: 20 }, view: {} },
+      viewport: { columns: 120, rows: 30 },
+    })
+    expect((await ui.find({ key: 'a' }))?.text).toContain('Add a search field')
+    expect(await ui.find({ type: 'Text', text: '[feat-search] ' })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: '(this session)' })).toBeDefined()
+    await ui.unmount()
+  })
+})
+
 describe('band', () => {
   test('draws the Sessions button above the prompt', async $ => {
     const ui = await $.ui.mount({
