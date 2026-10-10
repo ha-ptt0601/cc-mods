@@ -134,7 +134,7 @@ The header's `◐` button (hotkey `t`) cycles the style at once and stores the c
 
 ## State
 
-`$.state` (session) holds the UI state the drawing reads: open folders, cursor, scroll, search query, preview path and scroll, live activity marks, git snapshot. The directory cache stays in module memory (rebuilt after a reload). `$.store` holds only the style override.
+`$.state` (session) holds the UI state the drawing reads: open folders, cursor, scroll, search query, preview path and scroll, live activity marks, git snapshot. The directory cache is in `$.state` too (`listing`), so a redraw reads one source and a reload keeps the tree. `$.store` holds only the style override.
 
 ## Errors
 
