@@ -82,6 +82,16 @@ describe('pane', () => {
     await ui.unmount()
   })
 
+  test('t typed in the focused tree cycles the style too', async ($, on) => {
+    on('store.get', async () => ({ value: undefined }))
+    on('store.set', async () => ({ value: undefined }))
+    await setUp($, on)
+    const ui = await $.ui.mount(PANE)
+    await ui.key({ key: 't', in: 'rows' })
+    expect((await ui.find({ key: 'style' }))?.text).toContain('minimal')
+    await ui.unmount()
+  })
+
   test('t cycles the style', async ($, on) => {
     on('store.get', async () => ({ value: undefined }))
     on('store.set', async () => ({ value: undefined }))

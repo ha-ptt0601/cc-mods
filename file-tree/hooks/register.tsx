@@ -274,9 +274,24 @@ async function openExternal($: EngineInterface, path: string) {
 }
 
 /**
+ * Moves to the next style and remembers it over the /config value it overrides.
+ */
+async function cycleStyle($: EngineInterface) {
+  const was = await read($, styleName)
+  const next = nextStyle(isStyle(was) ? was : 'ide')
+  await $.store.set(STYLE_KEY, { style: next, over: settings.style })
+  await update($, styleName, () => next)
+}
+
+/**
  * Acts on a key the rows region sent: move, open, close, page.
  */
 async function onKey($: EngineInterface, key: string) {
+  // The toolbar's hotkeys reach the rows region instead while it has the focus.
+  if (key === 't') return cycleStyle($)
+  if (key === 's' || key === '/') return void (await $.ui.focus({ requestId: PANE, key: 'search' }))
+  if (key === 'r') return reset($)
+  if (key === 'x') return void (await $.ui.close({ id: PANE }))
   const shown = await read($, preview)
   if (shown && settings.layout === 'replace') {
     const page = Math.max(1, previewRoom - 2)
@@ -528,12 +543,7 @@ export const register: Register = (on, options) => {
             hotkey="t"
             label={`◐ ${current}`}
             dimColor
-            onPress={async () => {
-              const was = await read($, styleName)
-              const next = nextStyle(isStyle(was) ? was : 'ide')
-              await $.store.set(STYLE_KEY, { style: next, over: settings.style })
-              await update($, styleName, () => next)
-            }}
+            onPress={() => void cycleStyle($)}
           />
           <Button key="close" plain hotkey="x" label="Close" dimColor onPress={() => void $.ui.close({ id: PANE })} />
         </Box>
