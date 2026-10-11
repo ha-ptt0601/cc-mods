@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="420" viewBox="0 0 1100 420" font-family="Menlo, SFMono-Regular, Consolas, 'Liberation Mono', monospace" font-size="14">
+  <title>file-tree: the same example repo in the ide, minimal and rich styles (example data)</title>
+  <rect width="1100" height="420" rx="10" fill="#1e1e1e"/>
+  <path d="M0 10a10 10 0 0 1 10-10h1080a10 10 0 0 1 10 10v14H0z" fill="#2d2d2d"/>
+  <circle cx="20" cy="12" r="5" fill="#ff5f57"/>
+  <circle cx="38" cy="12" r="5" fill="#febc2e"/>
+  <circle cx="56" cy="12" r="5" fill="#28c840"/>
+  <text x="550.0" y="17" fill="#9a9a9a" text-anchor="middle" font-size="12">~/work/demo-app — file-tree styles</text>
+  <rect x="10" y="34" width="356" height="376" rx="6" fill="#252526"/>
+  <text x="22.0" y="58" text-anchor="start"><tspan fill="#d97757" font-weight="bold">demo-app</tspan></text>
+  <text x="354.0" y="58" text-anchor="end"><tspan fill="#8fa3f0">main</tspan><tspan fill="#7a7a7a">&#160;↑2</tspan><tspan fill="#e5c07b">&#160;●</tspan></text>
+  <text x="22.0" y="80" text-anchor="start" font-size="12"><tspan fill="#8fa3f0">r</tspan><tspan fill="#7a7a7a">:&#160;Refresh&#160;&#160;</tspan><tspan fill="#8fa3f0">s</tspan><tspan fill="#7a7a7a">:&#160;Search&#160;&#160;</tspan><tspan fill="#8fa3f0">t</tspan><tspan fill="#7a7a7a">:&#160;◐&#160;ide&#160;&#160;</tspan><tspan fill="#8fa3f0">x</tspan><tspan fill="#7a7a7a">:&#160;Close</tspan></text>
+  <text x="22.0" y="102" text-anchor="start" font-size="13"><tspan fill="#d4d4d4">Search:&#160;</tspan><tspan fill="#7a7a7a">file&#160;name</tspan></text>
+  <text x="22.0" y="128" text-anchor="start"><tspan fill="#4a4a4a"></tspan><tspan fill="#8fa3f0">▾&#160;</tspan><tspan fill="#e5c07b">app</tspan></text>
+  <text x="354.0" y="128" text-anchor="end"><tspan fill="#e5c07b">M</tspan></text>
+  <text x="22.0" y="150" text-anchor="start"><tspan fill="#4a4a4a">│&#160;</tspan><tspan fill="#8fa3f0">▾&#160;</tspan><tspan fill="#e5c07b">Http</tspan></text>
+  <text x="354.0" y="150" text-anchor="end"><tspan fill="#e5c07b">M</tspan></text>
+  <rect x="14" y="156" width="348" height="21" rx="3" fill="#313244"/>
+  <text x="22.0" y="172" text-anchor="start"><tspan fill="#4a4a4a">│&#160;│&#160;</tspan><tspan fill="#8fa3f0">&#160;&#160;</tspan><tspan fill="#a074c4">•&#160;</tspan><tspan fill="#7a4a2a">L</tspan><tspan fill="#7a4a2a">o</tspan><tspan fill="#7a4a2a">g</tspan><tspan fill="#7a4a2a">i</tspan><tspan fill="#7a4a2a">n</tspan><tspan fill="#7a4a2a">C</tspan><tspan fill="#7a4a2a">o</tspan><tspan fill="#c0763a">n</tspan><tspan fill="#f0a060">t</tspan><tspan fill="#ffd8b0">r</tspan><tspan fill="#f0a060">o</tspan><tspan fill="#c0763a">l</tspan><tspan fill="#7a4a2a">l</tspan><tspan fill="#7a4a2a">e</tspan><tspan fill="#7a4a2a">r</tspan><tspan fill="#7a4a2a">.</tspan><tspan fill="#7a4a2a">p</tspan><tspan fill="#7a4a2a">h</tspan><tspan fill="#7a4a2a">p</tspan></text>
+  <text x="354.0" y="172" text-anchor="end"><tspan fill="#e5c07b">M</tspan></text>
+  <text x="22.0" y="194" text-anchor="start"><tspan fill="#4a4a4a">│&#160;│&#160;</tspan><tspan fill="#8fa3f0">&#160;&#160;</tspan><tspan fill="#a074c4">•&#160;</tspan><tspan fill="#e5c07b">Kernel.php</tspan></text>
+  <text x="354.0" y="194" text-anchor="end"><tspan fill="#e5c07b">M</tspan></text>
+  <text x="22.0" y="216" text-anchor="start"><tspan fill="#4a4a4a">│&#160;</tspan><tspan fill="#8fa3f0">▸&#160;</tspan><tspan fill="#d4d4d4">Models</tspan></text>
+  <text x="22.0" y="238" text-anchor="start"><tspan fill="#4a4a4a"></tspan><tspan fill="#8fa3f0">▸&#160;</tspan><tspan fill="#b89cf0">config</tspan></text>
+  <text x="22.0" y="260" text-anchor="start"><tspan fill="#4a4a4a"></tspan><tspan fill="#8fa3f0">▾&#160;</tspan><tspan fill="#4ec94e">resources</tspan></text>
+  <text x="354.0" y="260" text-anchor="end"><tspan fill="#4ec94e">U</tspan></text>
+  <text x="22.0" y="282" text-anchor="start"><tspan fill="#4a4a4a">│&#160;</tspan><tspan fill="#8fa3f0">&#160;&#160;</tspan><tspan fill="#519aba">•&#160;</tspan><tspan fill="#4ec94e">login.ts</tspan></text>
+  <text x="354.0" y="282" text-anchor="end"><tspan fill="#4ec94e">U</tspan></text>
+  <text x="22.0" y="304" text-anchor="start"><tspan fill="#4a4a4a"></tspan><tspan fill="#8fa3f0">&#160;&#160;</tspan><tspan fill="#519aba">•&#160;</tspan><tspan fill="#d4d4d4">README.md</tspan></text>
+  <text x="22.0" y="326" text-anchor="start"><tspan fill="#4a4a4a"></tspan><tspan fill="#8fa3f0">&#160;&#160;</tspan><tspan fill="#cbcb41">•&#160;</tspan><tspan fill="#d4d4d4">composer.json</tspan></text>
+  <text x="188.0" y="400" text-anchor="middle" font-size="12"><tspan fill="#7a7a7a" font-weight="bold">ide</tspan></text>
+  <rect x="376" y="34" width="356" height="376" rx="6" fill="#252526"/>
+  <text x="388.0" y="58" text-anchor="start"><tspan fill="#d4d4d4" font-weight="bold">demo-app</tspan></text>
+  <text x="720.0" y="58" text-anchor="end"><tspan fill="#8fa3f0">main</tspan><tspan fill="#7a7a7a">&#160;↑2</tspan><tspan fill="#e5c07b">&#160;●</tspan></text>
+  <text x="388.0" y="80" text-anchor="start" font-size="12"><tspan fill="#8fa3f0">r</tspan><tspan fill="#7a7a7a">:&#160;Refresh&#160;&#160;</tspan><tspan fill="#8fa3f0">s</tspan><tspan fill="#7a7a7a">:&#160;Search&#160;&#160;</tspan><tspan fill="#8fa3f0">t</tspan><tspan fill="#7a7a7a">:&#160;◐&#160;minimal&#160;&#160;</tspan><tspan fill="#8fa3f0">x</tspan><tspan fill="#7a7a7a">:&#160;Close</tspan></text>
+  <text x="388.0" y="102" text-anchor="start" font-size="13"><tspan fill="#d4d4d4">Search:&#160;</tspan><tspan fill="#7a7a7a">file&#160;name</tspan></text>
+  <text x="388.0" y="128" text-anchor="start"><tspan fill="#d4d4d4">&#160;&#160;</tspan><tspan fill="#e5c07b">app/</tspan></text>
+  <text x="720.0" y="128" text-anchor="end"><tspan fill="#e5c07b">•</tspan></text>
+  <text x="388.0" y="150" text-anchor="start"><tspan fill="#d4d4d4">&#160;&#160;&#160;&#160;</tspan><tspan fill="#e5c07b">Http/</tspan></text>
+  <text x="720.0" y="150" text-anchor="end"><tspan fill="#e5c07b">•</tspan></text>
+  <rect x="380" y="156" width="348" height="21" rx="3" fill="#313244"/>
+  <text x="388.0" y="172" text-anchor="start"><tspan fill="#d4d4d4">&#160;&#160;&#160;&#160;&#160;&#160;</tspan><tspan fill="#f0a060">LoginController.php</tspan></text>
+  <text x="720.0" y="172" text-anchor="end"><tspan fill="#f0a060">•&#160;</tspan><tspan fill="#e5c07b">•</tspan></text>
+  <text x="388.0" y="194" text-anchor="start"><tspan fill="#d4d4d4">&#160;&#160;&#160;&#160;&#160;&#160;</tspan><tspan fill="#e5c07b">Kernel.php</tspan></text>
+  <text x="720.0" y="194" text-anchor="end"><tspan fill="#e5c07b">•</tspan></text>
+  <text x="388.0" y="216" text-anchor="start"><tspan fill="#d4d4d4">&#160;&#160;&#160;&#160;</tspan><tspan fill="#7a7a7a">Models/</tspan></text>
+  <text x="388.0" y="238" text-anchor="start"><tspan fill="#d4d4d4">&#160;&#160;</tspan><tspan fill="#b89cf0">config/</tspan></text>
+  <text x="388.0" y="260" text-anchor="start"><tspan fill="#d4d4d4">&#160;&#160;</tspan><tspan fill="#4ec94e">resources/</tspan></text>
+  <text x="720.0" y="260" text-anchor="end"><tspan fill="#4ec94e">•</tspan></text>
+  <text x="388.0" y="282" text-anchor="start"><tspan fill="#d4d4d4">&#160;&#160;&#160;&#160;</tspan><tspan fill="#4ec94e">login.ts</tspan></text>
+  <text x="720.0" y="282" text-anchor="end"><tspan fill="#4ec94e">•</tspan></text>
+  <text x="388.0" y="304" text-anchor="start"><tspan fill="#d4d4d4">&#160;&#160;</tspan><tspan fill="#7a7a7a">README.md</tspan></text>
+  <text x="388.0" y="326" text-anchor="start"><tspan fill="#d4d4d4">&#160;&#160;</tspan><tspan fill="#7a7a7a">composer.json</tspan></text>
+  <text x="554.0" y="400" text-anchor="middle" font-size="12"><tspan fill="#7a7a7a" font-weight="bold">minimal</tspan></text>
+  <rect x="742" y="34" width="356" height="376" rx="6" fill="#252526"/>
+  <text x="754.0" y="58" text-anchor="start"><tspan fill="#d97757" font-weight="bold">demo-app</tspan></text>
+  <text x="1086.0" y="58" text-anchor="end"><tspan fill="#8fa3f0">main</tspan><tspan fill="#7a7a7a">&#160;↑2</tspan><tspan fill="#e5c07b">&#160;●</tspan></text>
+  <text x="754.0" y="80" text-anchor="start" font-size="12"><tspan fill="#8fa3f0">r</tspan><tspan fill="#7a7a7a">:&#160;Refresh&#160;&#160;</tspan><tspan fill="#8fa3f0">s</tspan><tspan fill="#7a7a7a">:&#160;Search&#160;&#160;</tspan><tspan fill="#8fa3f0">t</tspan><tspan fill="#7a7a7a">:&#160;◐&#160;rich&#160;&#160;</tspan><tspan fill="#8fa3f0">x</tspan><tspan fill="#7a7a7a">:&#160;Close</tspan></text>
+  <text x="754.0" y="102" text-anchor="start" font-size="11"><tspan fill="#d97757">●&#160;</tspan><tspan fill="#7a7a7a">Claude&#160;is&#160;editing&#160;app/Http/LoginController.php</tspan></text>
+  <text x="754.0" y="124" text-anchor="start" font-size="13"><tspan fill="#d4d4d4">Search:&#160;</tspan><tspan fill="#7a7a7a">file&#160;name</tspan></text>
+  <text x="754.0" y="150" text-anchor="start"><tspan fill="#d4d4d4"></tspan><tspan fill="#8fa3f0">▾&#160;</tspan><tspan fill="#e5c07b">app</tspan></text>
+  <text x="1086.0" y="150" text-anchor="end"><tspan fill="#7a7a7a">M:2</tspan></text>
+  <text x="754.0" y="172" text-anchor="start"><tspan fill="#d4d4d4">&#160;&#160;</tspan><tspan fill="#8fa3f0">▾&#160;</tspan><tspan fill="#e5c07b">Http</tspan></text>
+  <text x="1086.0" y="172" text-anchor="end"><tspan fill="#7a7a7a">M:2</tspan></text>
+  <rect x="746" y="178" width="348" height="21" rx="3" fill="#313244"/>
+  <text x="754.0" y="194" text-anchor="start"><tspan fill="#d4d4d4">&#160;&#160;&#160;&#160;</tspan><tspan fill="#8fa3f0">&#160;&#160;</tspan><tspan fill="#a074c4">•&#160;</tspan><tspan fill="#7a4a2a">L</tspan><tspan fill="#7a4a2a">o</tspan><tspan fill="#7a4a2a">g</tspan><tspan fill="#7a4a2a">i</tspan><tspan fill="#7a4a2a">n</tspan><tspan fill="#7a4a2a">C</tspan><tspan fill="#7a4a2a">o</tspan><tspan fill="#c0763a">n</tspan><tspan fill="#f0a060">t</tspan><tspan fill="#ffd8b0">r</tspan><tspan fill="#f0a060">o</tspan><tspan fill="#c0763a">l</tspan><tspan fill="#7a4a2a">l</tspan><tspan fill="#7a4a2a">e</tspan><tspan fill="#7a4a2a">r</tspan><tspan fill="#7a4a2a">.</tspan><tspan fill="#7a4a2a">p</tspan><tspan fill="#7a4a2a">h</tspan><tspan fill="#7a4a2a">p</tspan></text>
+  <text x="1086.0" y="194" text-anchor="end"><tspan fill="#4ec94e">+12</tspan><tspan fill="#d4d4d4">&#160;</tspan><tspan fill="#e06c75">-3</tspan></text>
+  <text x="754.0" y="216" text-anchor="start"><tspan fill="#d4d4d4">&#160;&#160;&#160;&#160;</tspan><tspan fill="#8fa3f0">&#160;&#160;</tspan><tspan fill="#a074c4">•&#160;</tspan><tspan fill="#e5c07b">Kernel.php</tspan></text>
+  <text x="1086.0" y="216" text-anchor="end"><tspan fill="#4ec94e">+1</tspan><tspan fill="#d4d4d4">&#160;</tspan><tspan fill="#e06c75">-1</tspan></text>
+  <text x="754.0" y="238" text-anchor="start"><tspan fill="#d4d4d4">&#160;&#160;</tspan><tspan fill="#8fa3f0">▸&#160;</tspan><tspan fill="#d4d4d4">Models</tspan></text>
+  <text x="1086.0" y="238" text-anchor="end"><tspan fill="#7a7a7a">2d</tspan></text>
+  <text x="754.0" y="260" text-anchor="start"><tspan fill="#d4d4d4"></tspan><tspan fill="#8fa3f0">▸&#160;</tspan><tspan fill="#b89cf0">config</tspan></text>
+  <text x="1086.0" y="260" text-anchor="end"><tspan fill="#7a7a7a">3d</tspan></text>
+  <text x="754.0" y="282" text-anchor="start"><tspan fill="#d4d4d4"></tspan><tspan fill="#8fa3f0">▾&#160;</tspan><tspan fill="#4ec94e">resources</tspan></text>
+  <text x="1086.0" y="282" text-anchor="end"><tspan fill="#7a7a7a">?:1</tspan></text>
+  <text x="754.0" y="304" text-anchor="start"><tspan fill="#d4d4d4">&#160;&#160;</tspan><tspan fill="#8fa3f0">&#160;&#160;</tspan><tspan fill="#519aba">•&#160;</tspan><tspan fill="#4ec94e">login.ts</tspan></text>
+  <text x="1086.0" y="304" text-anchor="end"><tspan fill="#4ec94e">new</tspan></text>
+  <text x="754.0" y="326" text-anchor="start"><tspan fill="#d4d4d4"></tspan><tspan fill="#8fa3f0">&#160;&#160;</tspan><tspan fill="#519aba">•&#160;</tspan><tspan fill="#d4d4d4">README.md</tspan></text>
+  <text x="1086.0" y="326" text-anchor="end"><tspan fill="#7a7a7a">1w</tspan></text>
+  <text x="754.0" y="348" text-anchor="start"><tspan fill="#d4d4d4"></tspan><tspan fill="#8fa3f0">&#160;&#160;</tspan><tspan fill="#cbcb41">•&#160;</tspan><tspan fill="#d4d4d4">composer.json</tspan></text>
+  <text x="1086.0" y="348" text-anchor="end"><tspan fill="#7a7a7a">2w</tspan></text>
+  <text x="920.0" y="400" text-anchor="middle" font-size="12"><tspan fill="#7a7a7a" font-weight="bold">rich</tspan></text>
+</svg>
