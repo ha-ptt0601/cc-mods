@@ -567,6 +567,8 @@ export const register: Register = (on, options) => {
             })()
           }}
         />
+        {/* The rows region takes the keyboard only from a click; the engine cannot hand it over. */}
+        <Text dimColor>click the tree, then ↑↓ move · → ← open/close · Enter preview</Text>
         {message !== '' && <Text color="warning">{message}</Text>}
         {shown && !isSplit && previewBar}
         {shown && !isSplit

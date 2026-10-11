@@ -75,6 +75,13 @@ describe('pane', () => {
     await ui.unmount()
   })
 
+  test('says to click the tree before using the arrows', async ($, on) => {
+    await setUp($, on)
+    const ui = await $.ui.mount(PANE)
+    expect(await ui.find({ type: 'Text', text: /click the tree/ })).toBeDefined()
+    await ui.unmount()
+  })
+
   test('draws the same rows on the desktop surface', async ($, on) => {
     await setUp($, on)
     const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
