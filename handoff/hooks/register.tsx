@@ -217,11 +217,13 @@ export const register: Register = on => {
     const notes = await listNotes($, repo.dir)
     await update($, saved, () => ownNote(notes, e.session_id))
 
-    // A resumed writer still holds everything its note says; /clear in that session does not.
-    const candidates = notes.filter(
-      note => now - note.mtimeMs <= MAX_AGE_MS && !(e.source === 'resume' && writerOf(note.text) === e.session_id),
-    )
-    const { note, others } = pick(candidates, repo.branch)
+    // A resumed session has its own context: a note is for a session starting empty, and stays unread for it.
+    if (e.source === 'resume') {
+      await update($, previous, () => null)
+      return result
+    }
+
+    const { note, others } = pick(notes.filter(candidate => now - candidate.mtimeMs <= MAX_AGE_MS), repo.branch)
     // Only the newest note counts: once it is read, older ones on the branch stay out rather than surface one by one.
     const isRead = note !== undefined && (await $.store.get(`consumed:${note.path}`)) === note.mtimeMs
     await update($, previous, () => (note ? { name: note.name, savedAt: note.mtimeMs, isLoaded: !isRead } : null))

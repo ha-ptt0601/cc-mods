@@ -67,10 +67,6 @@ describe('what the band says about the note', () => {
     expect(handoffLabel(null, { name: 'Fix_login--abcdef12.md', savedAt: twoHoursAgo, isLoaded: true }, NOW)).toBe('loaded handoff "Fix login" from 2h ago')
   })
 
-  test('says when the last note was read by an earlier session', async () => {
-    expect(handoffLabel(null, { name: 'Fix_login--abcdef12.md', savedAt: twoHoursAgo, isLoaded: false }, NOW)).toBe('last handoff "Fix login" from 2h ago, already read')
-  })
-
   test("a session's own note comes first", async () => {
     const own = { path: '/d/Mine--abcdef12.md', savedAt: twoHoursAgo, tokens: 1 }
     expect(handoffLabel(own, { name: 'Other--11111111.md', savedAt: 0, isLoaded: true }, NOW)).toBe('handoff "Mine" saved 2h ago')
@@ -141,9 +137,10 @@ describe('loading the handoff at session start', () => {
     expect(injected(await $.classic.SessionStart({ source: 'clear', session_id: 'test-session' }))).toContain(NOTE)
   })
 
-  test('resuming another session reads the note', async ($, on) => {
+  test('resuming another session leaves the note for the next empty session', async ($, on) => {
     world(on)
-    expect(injected(await $.classic.SessionStart({ source: 'resume', session_id: 'other' }))).toContain(NOTE)
+    expect(injected(await $.classic.SessionStart({ source: 'resume', session_id: 'other' }))).toBe('')
+    expect(injected(await $.classic.SessionStart({ source: 'startup' }))).toContain(NOTE)
   })
 
   test('resuming the writer skips it, since that session still holds the context', async ($, on) => {
