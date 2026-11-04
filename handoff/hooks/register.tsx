@@ -101,8 +101,8 @@ export const injection = (path: string, text: string, others: readonly string[] 
 const repoOf = async ($: EngineInterface, cwd: string) => {
   const home = await $.env.get('HOME')
   const git = await $.process.run(['git', 'rev-parse', '--path-format=absolute', '--git-common-dir', '--abbrev-ref', 'HEAD'], { cwd })
-  const [commonDir, branch] = git.exitCode === 0 ? git.stdout.trim().split('\n') : [cwd, 'no-branch']
-  return { dir: `${home}/.claude/handoffs/${slug(commonDir.replace(/\/\.git$/, ''))}`, branch: branch ?? 'no-branch' }
+  const [commonDir = cwd, branch = 'no-branch'] = git.exitCode === 0 ? git.stdout.trim().split('\n') : []
+  return { dir: `${home}/.claude/handoffs/${slug(commonDir.replace(/\/\.git$/, ''))}`, branch }
 }
 
 const listNotes = async ($: EngineInterface, dir: string): Promise<Note[]> => {

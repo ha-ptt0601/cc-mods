@@ -172,7 +172,7 @@ describe('loading the handoff at session start', () => {
     const writes: Record<string, unknown> = {}
     on('state.set', ($: unknown, e: { key: string; value: unknown }) => {
       writes[e.key] = e.value
-      return { isSet: true, version: 1 }
+      return { value: { isSet: true as const, version: 1 } }
     })
     await $.classic.SessionStart({ source: 'startup' })
     expect(writes.previous).toEqual({ name: 'Fix_login--aaaaaaaa.md', savedAt: NOW - 60_000 })
@@ -183,7 +183,7 @@ describe('loading the handoff at session start', () => {
     const writes: Record<string, unknown> = {}
     on('state.set', ($: unknown, e: { key: string; value: unknown }) => {
       writes[e.key] = e.value
-      return { isSet: true, version: 1 }
+      return { value: { isSet: true as const, version: 1 } }
     })
     await $.classic.SessionStart({ source: 'startup' })
     await $.classic.SessionStart({ source: 'startup' })
@@ -236,9 +236,9 @@ describe('saving from a session that was just resumed', () => {
 
   test('writes the note from the loaded transcript', async ($, on) => {
     const { asked, written } = world(on, [{ role: 'user', text: 'fix the login bug', toolUses: [] }])
-    const { text } = await $.command.run({ command: 'handoff', args: '' })
+    const { text } = await $.command.run({ command: 'handoff', args: '' } as never)
     expect(text).toContain('Handoff saved')
-    expect(asked[0].prompt).toContain('fix the login bug')
+    expect(asked[0]?.prompt).toContain('fix the login bug')
     expect(written[0]).toContain('Goal: fix login')
     expect(written[0]).toContain('/.claude/handoffs/Users_me_work_api/fix_the_login_bug--test-ses.md')
     expect(written[0]).toContain('branch=feat/login')
@@ -246,7 +246,7 @@ describe('saving from a session that was just resumed', () => {
 
   test('an empty conversation saves nothing and says why', async ($, on) => {
     const { asked, written } = world(on, [])
-    const { text } = await $.command.run({ command: 'handoff', args: '' })
+    const { text } = await $.command.run({ command: 'handoff', args: '' } as never)
     expect(text).toContain('Nothing to hand off yet')
     expect(asked.length).toBe(0)
     expect(written.length).toBe(0)
