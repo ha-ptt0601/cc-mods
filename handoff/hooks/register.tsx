@@ -1,11 +1,13 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import type { ResumeCost, Saved } from '../types'
+import type { Previous, ResumeCost, Saved } from '../types'
 
 const REMIND_AT = 150_000
 const STALE_AFTER = 50_000
 const MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000
+const MAX_NOTES_READ = 20
+const MAX_NAME_CHARS = 60
 const MAX_INJECTED_CHARS = 12_000
 const MAX_MESSAGE_CHARS = 2_000
 const MAX_TRANSCRIPT_CHARS = 80_000
@@ -22,10 +24,31 @@ ${PROMPT}
 
 const tokens = atom({ plugin: 'handoff', key: 'tokens' } as const, 0)
 const saved = atom({ plugin: 'handoff', key: 'saved' } as const, null)
+const previous = atom({ plugin: 'handoff', key: 'previous' } as const, null)
 const resumeCost = atom({ plugin: 'handoff', key: 'resumeCost' } as const, null)
 const isSaving = atom({ plugin: 'handoff', key: 'isSaving' } as const, false)
+const transcript = atom({ plugin: 'handoff', key: 'transcript' } as const, null)
 
-export const slug = (text: string) => text.replace(/[^\w.-]+/g, '_').replace(/^_+|_+$/g, '') || 'default'
+type Note = { name: string; path: string; mtimeMs: number; text: string }
+
+export const slug = (text: string) => text.normalize('NFC').replace(/[^\p{L}\p{N}_.-]+/gu, '_').replace(/^_+|_+$/g, '') || 'default'
+
+export const noteFile = (title: string, session: string) => `${slug(title).slice(0, MAX_NAME_CHARS)}--${session.slice(0, 8)}.md`
+
+// A session keeps its file when its title changes later.
+export const isOwnFile = (name: string, session: string) => name.endsWith(`--${session.slice(0, 8)}.md`)
+
+// The last custom title wins, then the last AI title, as the session list shows them.
+export const titleFrom = (lines: readonly string[]) => {
+  const rows = lines.flatMap(line => {
+    try {
+      return [JSON.parse(line) as { customTitle?: string; aiTitle?: string }]
+    } catch {
+      return []
+    }
+  })
+  return rows.map(row => row.customTitle).filter(Boolean).at(-1) ?? rows.map(row => row.aiTitle).filter(Boolean).at(-1)
+}
 
 export const formatTokens = (n: number) => (n >= 1000 ? `${Math.round(n / 1000)}k` : String(n))
 
@@ -36,14 +59,34 @@ export const formatAge = (ms: number) => {
   return hours < 48 ? `${hours}h` : `${Math.floor(hours / 24)}d`
 }
 
-export const header = (session: string, at: string, count: number) =>
-  `<!-- handoff session=${session} at=${at} tokens=${count} -->\n`
+export const noteLabel = (name: string) => name.replace(/(--[^-/]{8})?\.md$/, '').replace(/_/g, ' ')
+
+// What the band says about the note: this session's own first, else the one left by the session before.
+export const handoffLabel = (own: Saved | null, last: Previous | null, now: number) => {
+  if (own) return `handoff "${noteLabel(own.path.split('/').at(-1) ?? '')}" saved ${formatAge(now - own.savedAt)} ago`
+  if (!last) return 'handoff not saved'
+  const left = `"${noteLabel(last.name)}" from ${formatAge(now - last.savedAt)} ago`
+  return last.isLoaded ? `loaded handoff ${left}` : `last handoff ${left}, already read`
+}
+
+export const header = (session: string, at: string, branch: string, count: number) =>
+  `<!-- handoff session=${session} at=${at} branch=${branch} tokens=${count} -->\n`
 
 export const writerOf = (text: string) => text.match(/^<!-- handoff session=(\S+)/)?.[1]
 
+// A note saved before branches were recorded is named after its branch.
+export const branchOf = (note: Pick<Note, 'name' | 'text'>) =>
+  note.text.match(/^<!-- handoff .*branch=(\S+)/)?.[1] ?? note.name.replace(/\.md$/, '')
+
+// Newest note on this branch; the rest are only named, since they may be other tasks.
+export const pick = (notes: readonly Note[], branch: string) => {
+  const note = notes.find(candidate => slug(branchOf(candidate)) === slug(branch))
+  return { note, others: notes.filter(other => other !== note).map(other => other.name) }
+}
+
 export const tokensOf = (text: string) => Number(text.match(/^<!-- handoff .*tokens=(\d+)/)?.[1] ?? 0)
 
-export const injection = (path: string, text: string) => {
+export const injection = (path: string, text: string, others: readonly string[] = []) => {
   const body = text.replace(/^<!-- handoff .*-->\n/, '')
   const isCut = body.length > MAX_INJECTED_CHARS
   return [
@@ -51,22 +94,42 @@ export const injection = (path: string, text: string) => {
     'Use it if the request continues that work and ignore it for a different task. Check it against the code before relying on it.',
     '',
     isCut ? `${body.slice(0, MAX_INJECTED_CHARS)}\n[cut, read the file for the rest]` : body,
+    ...(others.length ? ['', `Other handoff notes in the same folder, unread: ${others.join(', ')}`] : []),
   ].join('\n')
 }
 
-// One file per repository and branch, kept outside the repository so it is never committed; worktrees of a repo share it.
-const handoffPath = async ($: EngineInterface, cwd: string) => {
+// Kept outside the repository so a note is never committed; worktrees of a repo share the folder.
+const repoOf = async ($: EngineInterface, cwd: string) => {
   const home = await $.env.get('HOME')
   const git = await $.process.run(['git', 'rev-parse', '--path-format=absolute', '--git-common-dir', '--abbrev-ref', 'HEAD'], { cwd })
   const [commonDir, branch] = git.exitCode === 0 ? git.stdout.trim().split('\n') : [cwd, 'no-branch']
-  const repo = commonDir.replace(/\/\.git$/, '')
-  return `${home}/.claude/handoffs/${slug(repo)}/${slug(branch ?? 'no-branch')}.md`
+  return { dir: `${home}/.claude/handoffs/${slug(commonDir.replace(/\/\.git$/, ''))}`, branch: branch ?? 'no-branch' }
 }
 
-const loadSaved = async ($: EngineInterface, path: string): Promise<Saved | null> => {
-  if (!(await $.fs.exists(path))) return null
-  const [stat, text] = await Promise.all([$.fs.stat(path), $.fs.read(path)])
-  return { path, savedAt: stat.mtimeMs, tokens: tokensOf(text) }
+const listNotes = async ($: EngineInterface, dir: string): Promise<Note[]> => {
+  if (!(await $.fs.exists(dir))) return []
+  const entries = (await $.fs.list(dir)).filter(entry => entry.kind === 'file' && entry.name.endsWith('.md'))
+  const newest = entries.sort((a, b) => b.mtimeMs - a.mtimeMs).slice(0, MAX_NOTES_READ)
+  return Promise.all(newest.map(async ({ name, mtimeMs }) => {
+    const path = `${dir}/${name}`
+    return { name, path, mtimeMs, text: await $.fs.read(path) }
+  }))
+}
+
+const ownNote = (notes: readonly Note[], session: string): Saved | null => {
+  const note = notes.find(candidate => isOwnFile(candidate.name, session) || writerOf(candidate.text) === session)
+  return note ? { path: note.path, savedAt: note.mtimeMs, tokens: tokensOf(note.text) } : null
+}
+
+const sessionTitle = async ($: EngineInterface) => {
+  const path = await read($, transcript)
+  if (path) {
+    const found = await $.process.run(['grep', '-hE', '"type":"(custom-title|ai-title)"', path])
+    const title = titleFrom(found.stdout.split('\n').filter(Boolean))
+    if (title) return title
+  }
+  const first = (await $.session.messages()).find(row => row.role === 'user' && row.text && !row.text.startsWith('<'))
+  return first?.text.slice(0, MAX_NAME_CHARS) ?? 'session'
 }
 
 // Newest rows win when the transcript is too long: they say where the work stands.
@@ -100,9 +163,11 @@ const save = async ($: EngineInterface): Promise<string> => {
     if (!result.isAnswered) {
       return result.reason === 'nothing-to-fork' ? 'Nothing to hand off yet: this conversation is empty.' : `Handoff not saved: ${result.reason}.`
     }
-    const [path, session, usage, now] = await Promise.all([handoffPath($, await $.session.cwd()), $.session.id(), $.session.usage(), $.clock.now()])
-    const count = usage.context.tokens ?? 0
-    await $.fs.write(path, header(session, new Date(now).toISOString(), count) + result.text.trim() + '\n')
+    const [repo, session, usage, now, known] = await Promise.all([repoOf($, await $.session.cwd()), $.session.id(), $.session.usage(), $.clock.now(), read($, tokens)])
+    const count = usage.context.tokens ?? known
+    const own = (await listNotes($, repo.dir)).find(note => isOwnFile(note.name, session))
+    const path = own?.path ?? `${repo.dir}/${noteFile(await sessionTitle($), session)}`
+    await $.fs.write(path, header(session, new Date(now).toISOString(), repo.branch, count) + result.text.trim() + '\n')
     await update($, saved, () => ({ path, savedAt: now, tokens: count }))
     return `Handoff saved: ${path}`
   } finally {
@@ -114,8 +179,9 @@ export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({ name: 'handoff', description: 'Save a handoff note for the next session on this branch.' })
     const { context } = await $.session.usage()
-    await update($, tokens, () => context.tokens ?? 0)
-    const found = await loadSaved($, await handoffPath($, e.cwd))
+    if (context.tokens !== undefined) await update($, tokens, () => context.tokens ?? 0)
+    const [repo, session] = await Promise.all([repoOf($, e.cwd), $.session.id()])
+    const found = ownNote(await listNotes($, repo.dir), session)
     await update($, saved, () => found)
     return next(e)
   })
@@ -123,7 +189,8 @@ export const register: Register = on => {
   on('command.run', { command: 'handoff' }, async $ => ({ text: await save($) }))
 
   on('session.measure', async ($, e, next) => {
-    await update($, tokens, () => e.context.tokens ?? 0)
+    // A session just resumed has no fresh reading yet; keep the size SessionStart reported.
+    if (e.context.tokens !== undefined) await update($, tokens, () => e.context.tokens ?? 0)
     return next(e)
   })
 
@@ -137,25 +204,31 @@ export const register: Register = on => {
     const result = await next(e)
     if (e.source === 'compact' || e.source === 'fork' || e.agent_type) return result
 
+    if (e.transcript_path) await update($, transcript, () => e.transcript_path)
+    if (e.source === 'clear') await update($, tokens, () => 0)
+    if (e.source === 'resume' && e.context_tokens !== undefined) await update($, tokens, () => e.context_tokens ?? 0)
+
     if (e.source === 'resume' && e.prompt_cache_likely_expired && (e.context_tokens ?? 0) >= REMIND_AT) {
       const cost: ResumeCost = { tokens: e.context_tokens ?? 0, usd: e.estimated_cache_write_usd }
       await update($, resumeCost, () => cost)
     }
 
-    const path = await handoffPath($, e.cwd)
-    if (!(await $.fs.exists(path))) return result
-    const [stat, text, now] = await Promise.all([$.fs.stat(path), $.fs.read(path), $.clock.now()])
-    await update($, saved, () => ({ path, savedAt: stat.mtimeMs, tokens: tokensOf(text) }))
+    const [repo, now] = await Promise.all([repoOf($, e.cwd), $.clock.now()])
+    const notes = await listNotes($, repo.dir)
+    await update($, saved, () => ownNote(notes, e.session_id))
 
-    const consumedKey = `consumed:${path}`
-    const isConsumed = (await $.store.get(consumedKey)) === stat.mtimeMs
-    const isTooOld = now - stat.mtimeMs > MAX_AGE_MS
-    // A resumed writer still holds everything the note says; /clear in that session does not.
-    const isOwnResume = e.source === 'resume' && writerOf(text) === e.session_id
-    if (isConsumed || isTooOld || isOwnResume) return result
+    // A resumed writer still holds everything its note says; /clear in that session does not.
+    const candidates = notes.filter(
+      note => now - note.mtimeMs <= MAX_AGE_MS && !(e.source === 'resume' && writerOf(note.text) === e.session_id),
+    )
+    const { note, others } = pick(candidates, repo.branch)
+    // Only the newest note counts: once it is read, older ones on the branch stay out rather than surface one by one.
+    const isRead = note !== undefined && (await $.store.get(`consumed:${note.path}`)) === note.mtimeMs
+    await update($, previous, () => (note ? { name: note.name, savedAt: note.mtimeMs, isLoaded: !isRead } : null))
+    if (!note || isRead) return result
 
-    await $.store.set(consumedKey, stat.mtimeMs)
-    return { ...result, additionalContext: [...(result.additionalContext ?? []), injection(path, text)] }
+    await $.store.set(`consumed:${note.path}`, note.mtimeMs)
+    return { ...result, additionalContext: [...(result.additionalContext ?? []), injection(note.path, note.text, others)] }
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
@@ -165,13 +238,14 @@ export const register: Register = on => {
     const { Box, Button, Text } = $.ui.resolve(e)
     const count = await read($, tokens)
     const handoff = await read($, saved)
+    const last = await read($, previous)
     const resume = await read($, resumeCost)
     const saving = await read($, isSaving)
     const now = await $.clock.now()
 
     const grown = handoff ? count - handoff.tokens : count
     const isDue = count >= REMIND_AT && (!handoff || grown >= STALE_AFTER)
-    const age = handoff ? `saved ${formatAge(now - handoff.savedAt)} ago` : 'not saved'
+    const label = handoffLabel(handoff, last, now)
     const cost = resume?.usd === undefined ? '' : ` (~$${resume.usd.toFixed(2)})`
 
     const row = (
@@ -184,7 +258,7 @@ export const register: Register = on => {
           <Text dimColor>Saving handoff…</Text>
         ) : (
           <Text color={isDue ? 'yellow' : undefined} dimColor={!isDue} wrap="truncate">
-            Context {formatTokens(count)} · handoff {age}
+            {count > 0 ? `Context ${formatTokens(count)} · ` : ''}{label}
             {isDue ? ' · save one before you leave' : ' · /handoff'}
           </Text>
         )}
