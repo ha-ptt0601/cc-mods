@@ -1,0 +1,7 @@
+{
+  "name": "handoff",
+  "version": "0.1.0",
+  "description": "Reminds you to save a handoff when context grows, and loads it into the next session automatically",
+  "author": { "name": "ha-ptt0601" },
+  "types": "./types/index.d.ts"
+}

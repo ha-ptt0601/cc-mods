@@ -14,6 +14,11 @@
       "name": "file-tree",
       "source": "./file-tree",
       "description": "An IDE-style file tree that shows what Claude reads, edits and commits"
+    },
+    {
+      "name": "handoff",
+      "source": "./handoff",
+      "description": "Reminds you to save a handoff when context grows, and loads it into the next session automatically"
     }
   ]
 }
