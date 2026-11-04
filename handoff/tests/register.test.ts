@@ -64,12 +64,12 @@ describe('what the band says about the note', () => {
   })
 
   test('a reopened session names the note it just loaded', async () => {
-    expect(handoffLabel(null, { name: 'Fix_login--abcdef12.md', savedAt: twoHoursAgo, isLoaded: true }, NOW)).toBe('loaded handoff "Fix login" from 2h ago')
+    expect(handoffLabel(null, { name: 'Fix_login--abcdef12.md', savedAt: twoHoursAgo }, NOW)).toBe('loaded handoff "Fix login" from 2h ago')
   })
 
   test("a session's own note comes first", async () => {
     const own = { path: '/d/Mine--abcdef12.md', savedAt: twoHoursAgo, tokens: 1 }
-    expect(handoffLabel(own, { name: 'Other--11111111.md', savedAt: 0, isLoaded: true }, NOW)).toBe('handoff "Mine" saved 2h ago')
+    expect(handoffLabel(own, { name: 'Other--11111111.md', savedAt: 0 }, NOW)).toBe('handoff "Mine" saved 2h ago')
   })
 
   test('says when there is nothing', async () => {
@@ -175,7 +175,19 @@ describe('loading the handoff at session start', () => {
       return { isSet: true, version: 1 }
     })
     await $.classic.SessionStart({ source: 'startup' })
-    expect(writes.previous).toEqual({ name: 'Fix_login--aaaaaaaa.md', savedAt: NOW - 60_000, isLoaded: true })
+    expect(writes.previous).toEqual({ name: 'Fix_login--aaaaaaaa.md', savedAt: NOW - 60_000 })
+  })
+
+  test('the band names nothing once the note was read by an earlier session', async ($, on) => {
+    world(on)
+    const writes: Record<string, unknown> = {}
+    on('state.set', ($: unknown, e: { key: string; value: unknown }) => {
+      writes[e.key] = e.value
+      return { isSet: true, version: 1 }
+    })
+    await $.classic.SessionStart({ source: 'startup' })
+    await $.classic.SessionStart({ source: 'startup' })
+    expect(writes.previous).toBeNull()
   })
 
   test('a note older than two weeks is left out', async ($, on) => {

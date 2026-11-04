@@ -61,12 +61,11 @@ export const formatAge = (ms: number) => {
 
 export const noteLabel = (name: string) => name.replace(/(--[^-/]{8})?\.md$/, '').replace(/_/g, ' ')
 
-// What the band says about the note: this session's own first, else the one left by the session before.
+// What the band says about the note: this session's own first, else the one this session just loaded.
 export const handoffLabel = (own: Saved | null, last: Previous | null, now: number) => {
   if (own) return `handoff "${noteLabel(own.path.split('/').at(-1) ?? '')}" saved ${formatAge(now - own.savedAt)} ago`
   if (!last) return 'handoff not saved'
-  const left = `"${noteLabel(last.name)}" from ${formatAge(now - last.savedAt)} ago`
-  return last.isLoaded ? `loaded handoff ${left}` : `last handoff ${left}, already read`
+  return `loaded handoff "${noteLabel(last.name)}" from ${formatAge(now - last.savedAt)} ago`
 }
 
 export const header = (session: string, at: string, branch: string, count: number) =>
@@ -226,8 +225,12 @@ export const register: Register = on => {
     const { note, others } = pick(notes.filter(candidate => now - candidate.mtimeMs <= MAX_AGE_MS), repo.branch)
     // Only the newest note counts: once it is read, older ones on the branch stay out rather than surface one by one.
     const isRead = note !== undefined && (await $.store.get(`consumed:${note.path}`)) === note.mtimeMs
-    await update($, previous, () => (note ? { name: note.name, savedAt: note.mtimeMs, isLoaded: !isRead } : null))
-    if (!note || isRead) return result
+    if (!note || isRead) {
+      await update($, previous, () => null)
+      return result
+    }
+
+    await update($, previous, () => ({ name: note.name, savedAt: note.mtimeMs }))
 
     await $.store.set(`consumed:${note.path}`, note.mtimeMs)
     return { ...result, additionalContext: [...(result.additionalContext ?? []), injection(note.path, note.text, others)] }
