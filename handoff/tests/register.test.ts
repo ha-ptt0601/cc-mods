@@ -1,6 +1,6 @@
 import { describe, expect, mock, test, tier } from 'claude-code/testing'
 
-import { formatAge, formatTokens, header, injection, slug, tokensOf, writerOf } from '../hooks/register'
+import { condense, formatAge, formatTokens, header, injection, slug, tokensOf, writerOf } from '../hooks/register'
 
 tier('user')
 
@@ -95,5 +95,18 @@ describe('loading the handoff at session start', () => {
     world(on, { hasFile: false })
     expect(injected(await $.classic.SessionStart({ source: 'startup' }))).toBe('')
     expect(injected(await $.classic.SessionStart({ source: 'compact' }))).toBe('')
+  })
+})
+
+describe('condense', () => {
+  test('keeps the newest rows when the transcript is too long', async () => {
+    const rows = Array.from({ length: 100 }, (_, i) => ({ role: 'user', text: `row-${i} `.padEnd(1900, 'x') }))
+    const text = condense(rows)
+    expect(text).toContain('row-99 ')
+    expect(text).not.toContain('row-0 ')
+  })
+
+  test('names tools and drops empty rows', async () => {
+    expect(condense([{ role: 'assistant', text: '', toolUses: [{ tool: 'Bash' }] }, { role: 'user', text: '' }])).toBe('assistant:  [tools: Bash]')
   })
 })
